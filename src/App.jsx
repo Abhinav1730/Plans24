@@ -1,12 +1,13 @@
 import './App.css'
 import { Button } from './components/ui/button'
+import Hero from './components/usage/Hero'
 
 function App() {
 
   return (
     <>
-      <h2>Welcome</h2>
-      <Button>Abhinav</Button>
+      {/* Hero Section */}
+      <Hero/>
     </>
   )
 }
