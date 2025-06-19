@@ -4,10 +4,12 @@ import { Link } from "react-router-dom";
 
 function Hero() {
   return (
+    //for entire screen background
     <div
       className="w-full h-screen bg-cover bg-center flex flex-col items-center justify-center gap-9 rounded-2xl"
       style={{ backgroundImage: "url('/public/place-1.jpg')" }}
     >
+      {/* the inside content of the page */}
       <div className="flex flex-col items-center mx-56 gap-9">
         <h1 className="font-sans text-[35px] text-center mt-16 border-red-100 rounded-3xl p-2 border bg-transparent text-white">
           Plan your perfect trip effortlessly with our AI travel planner –
@@ -23,8 +25,8 @@ function Hero() {
         </p>
 
         <Link to={"/create-trip"}>
-          <Button className="bg-black text-white font-sans hover:bg-red-700 hover:text-white">
-            Get Started
+          <Button className="bg-transparent text-white font-sans hover:border-red-800 hover:bg-transparent border border-white text-xl">
+            Click here to Get Started
           </Button>
         </Link>
       </div>
