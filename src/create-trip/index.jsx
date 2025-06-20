@@ -9,6 +9,20 @@ import {
 import { Button } from "../components/ui/button";
 import { toast } from "sonner";
 import { generateTrip } from "../services/AIModel";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../components/ui/dialog";
+import { FcGoogle } from "react-icons/fc";
+import { useGoogleLogin } from "@react-oauth/google";
+import axios from "axios";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../services/firebaseConfig";
 
 const backGroundImages = [
   "/place-5.jpg",
@@ -22,6 +36,8 @@ function CreateTrip() {
   const [currentBackGroundImageIndex, setCurrentBackGroundImageIndex] =
     useState(0);
   const [selectedDestination, setSelectedDestination] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [openDialogForLogin, setOpenDialogueForLogin] = useState(false);
   const [formData, setFormData] = useState({
     location: null,
     days: "",
@@ -36,6 +52,11 @@ function CreateTrip() {
     }));
   };
 
+  const loginWithGoogle = useGoogleLogin({
+    onSuccess: (codeResponse) => GetUserProfile(codeResponse),
+    onError: (error) => console.log(error),
+  });
+
   useEffect(() => {
     console.log("formData updated:", formData);
   }, [formData]);
@@ -49,7 +70,14 @@ function CreateTrip() {
     return () => clearInterval(interval);
   }, []);
 
+  //method to generate trip from AI Model
   const onGenerateTrip = async () => {
+    //checking for the user if logined or not
+    const user = localStorage.getItem("user");
+    if (!user) {
+      setOpenDialogueForLogin(true);
+      return;
+    }
     if (!formData.location) return toast.error("Please enter a location!");
     if (!formData.days || parseInt(formData.days) <= 0)
       return toast.error("Please enter valid number of days.");
@@ -60,6 +88,7 @@ function CreateTrip() {
 
     toast.success("All details valid! Generating your trip...");
 
+    setLoading(true);
     const FINAL_PROMPT = AI_PROMPT.replace(
       "{location}",
       formData?.location?.name
@@ -73,11 +102,48 @@ function CreateTrip() {
     try {
       const result = await generateTrip(FINAL_PROMPT);
       console.log("AI response:", result);
+      setLoading(false);
+      SaveAITrip(result);
       toast.success("Trip generated successfully!");
     } catch (error) {
       console.error("Error from Gemini:", error);
       toast.error("Failed to generate the trip.");
     }
+  };
+
+  //Method to save Generated Trip in Firebase
+  const SaveAITrip = async (TripData) => {
+    setLoading(true);
+    // Add a new document in collection ""
+    const user = JSON.parse(localStorage.getItem("user"));
+    const docId = Date.now().toString();
+    await setDoc(doc(db, "AIGeneratedTrips", docId), {
+      userSelection: formData,
+      tripData: TripData,
+      userEmail: user?.email,
+      id: docId,
+    });
+    setLoading(false);
+  };
+
+  //Method to get user details from google
+  const GetUserProfile = (tokenInformation) => {
+    axios
+      .get(
+        `https://www.googleapis.com/oauth2/v1/userinfo?access_token=${tokenInformation?.access_token}`,
+        {
+          headers: {
+            Authorization: `Bearer ${tokenInformation?.access_token}`,
+            Accept: "Application/json",
+          },
+        }
+      )
+      .then((response) => {
+        console.log(response);
+        localStorage.setItem("user", JSON.stringify(response.data));
+        setOpenDialogueForLogin(false);
+        onGenerateTrip();
+      });
   };
 
   return (
@@ -188,10 +254,43 @@ function CreateTrip() {
       </div>
 
       <div className="my-10 justify-end flex">
-        <Button className="text-xl font-serif" onClick={onGenerateTrip}>
-          Generate the Trip
+        <Button
+          disabled={loading}
+          className="text-xl font-serif"
+          onClick={onGenerateTrip}
+        >
+          {loading ? (
+            <AiOutlineLoading3Quarters className="h-7 w-7 animate-spin" />
+          ) : (
+            "Generate the Trip"
+          )}
         </Button>
       </div>
+      <Dialog open={openDialogForLogin}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogDescription>
+              <img
+                className="w-24 rounded-full"
+                src="/logo-plans24.png"
+                alt=""
+              />
+              <h2 className="font-bold text-lg font-serif mt-7">
+                Sign In With Google
+              </h2>
+              <p>Sign Into the Plans24 using Google Authentication securely</p>
+              <Button
+                disabled={loading}
+                onClick={loginWithGoogle}
+                className="w-full mt-5 font-serif flex items-center"
+              >
+                {" "}
+                <FcGoogle className="h-7 w-7" /> Sign In
+              </Button>
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
