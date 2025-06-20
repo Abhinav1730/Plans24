@@ -17,15 +17,37 @@ function CreateTrip() {
     useState(0);
   const [selectedDestination, setSelectedDestination] = useState(null);
 
+  // formData will hold all inputs in a single object
+  const [formData, setFormData] = useState({
+    location: null,
+    days: "",
+    budget: null,
+    travelWith: null,
+  });
+
+  // Universal handler for form inputs
+  const handleInputChange = (name, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  // Debug: log form data changes
+  useEffect(() => {
+    console.log("formData updated:", formData);
+  }, [formData]);
+
+  // Background image slider
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentBackGroundImageIndex((prevIndex) =>
         prevIndex === backGroundImages.length - 1 ? 0 : prevIndex + 1
       );
     }, 10000);
-
-    return () => clearInterval(interval); //for cleanup the mounted ones
+    return () => clearInterval(interval);
   }, []);
+
   return (
     <div
       className="w-full min-h-screen bg-cover bg-center flex flex-col items-center justify-center gap-9 transition-all duration-1000 ease-in-out rounded-2xl"
@@ -44,28 +66,40 @@ function CreateTrip() {
         </p>
 
         <div className="mt-20 flex flex-col gap-9">
+          {/* Destination */}
           <div>
             <h2 className="text-2xl my-3 font-medium text-white font-serif">
               What is your Destination?
             </h2>
-            <OSMSearchBox onSelect={(place) => setSelectedDestination(place)} />
+            <OSMSearchBox
+              onSelect={(place) => {
+                setSelectedDestination(place);
+                handleInputChange("location", place);
+              }}
+            />
             {selectedDestination && (
-              <p className="mt-3 text-gray-100 bg-transparent text-xl font-serif">
+              <p className="mt-3 text-white bg-transparent text-xl font-serif">
                 You Selected : {selectedDestination.display_name}
               </p>
             )}
           </div>
+
+          {/* Number of days */}
           <div>
             <h2 className="text-2xl my-3 font-medium text-white font-serif">
               How Many Days are you Planning the Trip?
             </h2>
             <Input
-              placeholder={"Example:3"}
+              placeholder={"Example: 3"}
               type="number"
-              className="rounded-3xl text-gray-100 border border-black bg-white text-2xl"
+              value={formData.days}
+              onChange={(e) => handleInputChange("days", e.target.value)}
+              className="rounded-3xl text-black border border-black bg-white text-2xl"
             />
           </div>
         </div>
+
+        {/* Budget */}
         <div className="mt-10">
           <h2 className="text-2xl my-3 font-medium text-white font-serif">
             What is your Budget?
@@ -77,7 +111,12 @@ function CreateTrip() {
             {SelectBudgetOptions.map((item, index) => (
               <div
                 key={index}
-                className="p-4 border rounded-lg hover:shadow-xl cursor-pointer"
+                onClick={() => handleInputChange("budget", item)}
+                className={`p-4 border rounded-lg hover:shadow-xl cursor-pointer ${
+                  formData.budget?.title === item.title
+                    ? "border-red-400 shadow-lg"
+                    : ""
+                }`}
               >
                 <h2 className="text-4xl">{item.icon}</h2>
                 <h2 className="font-bold text-white text-lg font-serif">
@@ -90,6 +129,8 @@ function CreateTrip() {
             ))}
           </div>
         </div>
+
+        {/* Travel With */}
         <div className="mt-10">
           <h2 className="text-2xl my-3 font-medium text-white font-serif">
             With whom do you plan on travelling with on your next Adventure?
@@ -98,7 +139,12 @@ function CreateTrip() {
             {SelectTravelList.map((item, index) => (
               <div
                 key={index}
-                className="p-4 border rounded-lg hover:shadow-xl cursor-pointer"
+                onClick={() => handleInputChange("travelWith", item)}
+                className={`p-4 border rounded-lg hover:shadow-xl cursor-pointer ${
+                  formData.travelWith?.title === item.title
+                    ? "border-red-400 shadow-lg"
+                    : ""
+                }`}
               >
                 <h2 className="text-4xl">{item.icon}</h2>
                 <h2 className="font-bold text-white font-serif text-lg">
@@ -112,8 +158,15 @@ function CreateTrip() {
           </div>
         </div>
       </div>
+
+      {/* Submit button */}
       <div className="my-10 justify-end flex">
-        <Button className="text-xl font-serif">Generate the Trip</Button>
+        <Button
+          className="text-xl font-serif"
+          onClick={() => console.log(formData)}
+        >
+          Generate the Trip
+        </Button>
       </div>
     </div>
   );
