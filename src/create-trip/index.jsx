@@ -3,6 +3,7 @@ import OSMSearchBox from "./OSMSearchBox";
 import { Input } from "../components/ui/input.jsx";
 import { SelectBudgetOptions, SelectTravelList } from "../constants/options";
 import { Button } from "../components/ui/button";
+import { toast } from "sonner";
 
 const backGroundImages = [
   "/place-5.jpg",
@@ -47,6 +48,31 @@ function CreateTrip() {
     }, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  const onGenerateTrip = () => {
+    if (!formData.location) {
+      toast.error("Please enter a location where you want to go!");
+      return;
+    }
+
+    if (!formData.days || parseInt(formData.days) <= 0) {
+      toast.error("Please enter a valid number of days for your trip.");
+      return;
+    }
+
+    if (parseInt(formData.days) > 7) {
+      toast.error("Please enter a trip duration of 7 days or fewer.");
+      return;
+    }
+
+    if (!formData.budget || !formData.travelWith) {
+      toast.error("Please select your budget and travel preference.");
+      return;
+    }
+
+    // Success message
+    toast.success("All details are valid! Generating your trip...");
+  };
 
   return (
     <div
@@ -161,10 +187,7 @@ function CreateTrip() {
 
       {/* Submit button */}
       <div className="my-10 justify-end flex">
-        <Button
-          className="text-xl font-serif"
-          onClick={() => console.log(formData)}
-        >
+        <Button className="text-xl font-serif" onClick={onGenerateTrip}>
           Generate the Trip
         </Button>
       </div>
