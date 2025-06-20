@@ -23,6 +23,7 @@ import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "../services/firebaseConfig";
+import { useNavigate } from "react-router-dom";
 
 const backGroundImages = [
   "/place-5.jpg",
@@ -33,6 +34,7 @@ const backGroundImages = [
 ];
 
 function CreateTrip() {
+  const navigate = useNavigate();
   const [currentBackGroundImageIndex, setCurrentBackGroundImageIndex] =
     useState(0);
   const [selectedDestination, setSelectedDestination] = useState(null);
@@ -112,19 +114,42 @@ function CreateTrip() {
   };
 
   //Method to save Generated Trip in Firebase
-  const SaveAITrip = async (TripData) => {
-    setLoading(true);
-    // Add a new document in collection ""
-    const user = JSON.parse(localStorage.getItem("user"));
-    const docId = Date.now().toString();
-    await setDoc(doc(db, "AIGeneratedTrips", docId), {
-      userSelection: formData,
-      tripData: TripData,
-      userEmail: user?.email,
-      id: docId,
-    });
-    setLoading(false);
-  };
+ const SaveAITrip = async (TripData) => {
+  setLoading(true);
+  const user = JSON.parse(localStorage.getItem("user"));
+  const docId = Date.now().toString();
+
+  let parsedTripData = TripData;
+
+  // If it's a string (i.e., contains markdown or raw JSON text)
+  if (typeof TripData === "string") {
+    try {
+      // Clean markdown-style code fencing if present
+      const cleanedJson = TripData
+        .replace(/^```(json)?/i, "") // remove ```json or ```
+        .replace(/```$/, "") // remove ending ```
+        .trim();
+
+      parsedTripData = JSON.parse(cleanedJson);
+    } catch (err) {
+      console.error("JSON parsing failed:", err);
+      toast.error("AI response format is invalid.");
+      setLoading(false);
+      return;
+    }
+  }
+
+  await setDoc(doc(db, "AIGeneratedTrips", docId), {
+    userSelection: formData,
+    tripData: parsedTripData,
+    userEmail: user?.email,
+    id: docId,
+  });
+
+  setLoading(false);
+  navigate("/view-trip/" + docId);
+};
+
 
   //Method to get user details from google
   const GetUserProfile = (tokenInformation) => {
