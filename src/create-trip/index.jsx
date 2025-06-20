@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from "react";
 import OSMSearchBox from "./OSMSearchBox";
 import { Input } from "../components/ui/input.jsx";
-import { SelectBudgetOptions, SelectTravelList } from "../constants/options";
+import {
+  AI_PROMPT,
+  SelectBudgetOptions,
+  SelectTravelList,
+} from "../constants/options";
 import { Button } from "../components/ui/button";
 import { toast } from "sonner";
+import { generateTrip } from "../services/AIModel";
 
 const backGroundImages = [
   "/place-5.jpg",
@@ -17,8 +22,6 @@ function CreateTrip() {
   const [currentBackGroundImageIndex, setCurrentBackGroundImageIndex] =
     useState(0);
   const [selectedDestination, setSelectedDestination] = useState(null);
-
-  // formData will hold all inputs in a single object
   const [formData, setFormData] = useState({
     location: null,
     days: "",
@@ -26,7 +29,6 @@ function CreateTrip() {
     travelWith: null,
   });
 
-  // Universal handler for form inputs
   const handleInputChange = (name, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -34,12 +36,10 @@ function CreateTrip() {
     }));
   };
 
-  // Debug: log form data changes
   useEffect(() => {
     console.log("formData updated:", formData);
   }, [formData]);
 
-  // Background image slider
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentBackGroundImageIndex((prevIndex) =>
@@ -49,29 +49,35 @@ function CreateTrip() {
     return () => clearInterval(interval);
   }, []);
 
-  const onGenerateTrip = () => {
-    if (!formData.location) {
-      toast.error("Please enter a location where you want to go!");
-      return;
-    }
+  const onGenerateTrip = async () => {
+    if (!formData.location) return toast.error("Please enter a location!");
+    if (!formData.days || parseInt(formData.days) <= 0)
+      return toast.error("Please enter valid number of days.");
+    if (parseInt(formData.days) > 7)
+      return toast.error("Trip duration cannot exceed 7 days.");
+    if (!formData.budget || !formData.travelWith)
+      return toast.error("Select your budget and travel preference.");
 
-    if (!formData.days || parseInt(formData.days) <= 0) {
-      toast.error("Please enter a valid number of days for your trip.");
-      return;
-    }
+    toast.success("All details valid! Generating your trip...");
 
-    if (parseInt(formData.days) > 7) {
-      toast.error("Please enter a trip duration of 7 days or fewer.");
-      return;
-    }
+    const FINAL_PROMPT = AI_PROMPT.replace(
+      "{location}",
+      formData?.location?.name
+    )
+      .replace(/{days}/g, formData?.days)
+      .replace("{travelWith}", formData?.travelWith?.title)
+      .replace("{budget}", formData?.budget?.title);
 
-    if (!formData.budget || !formData.travelWith) {
-      toast.error("Please select your budget and travel preference.");
-      return;
-    }
+    console.log("Prompt to Gemini:", FINAL_PROMPT);
 
-    // Success message
-    toast.success("All details are valid! Generating your trip...");
+    try {
+      const result = await generateTrip(FINAL_PROMPT);
+      console.log("AI response:", result);
+      toast.success("Trip generated successfully!");
+    } catch (error) {
+      console.error("Error from Gemini:", error);
+      toast.error("Failed to generate the trip.");
+    }
   };
 
   return (
@@ -92,7 +98,6 @@ function CreateTrip() {
         </p>
 
         <div className="mt-20 flex flex-col gap-9">
-          {/* Destination */}
           <div>
             <h2 className="text-2xl my-3 font-medium text-white font-serif">
               What is your Destination?
@@ -110,7 +115,6 @@ function CreateTrip() {
             )}
           </div>
 
-          {/* Number of days */}
           <div>
             <h2 className="text-2xl my-3 font-medium text-white font-serif">
               How Many Days are you Planning the Trip?
@@ -125,7 +129,6 @@ function CreateTrip() {
           </div>
         </div>
 
-        {/* Budget */}
         <div className="mt-10">
           <h2 className="text-2xl my-3 font-medium text-white font-serif">
             What is your Budget?
@@ -156,7 +159,6 @@ function CreateTrip() {
           </div>
         </div>
 
-        {/* Travel With */}
         <div className="mt-10">
           <h2 className="text-2xl my-3 font-medium text-white font-serif">
             With whom do you plan on travelling with on your next Adventure?
@@ -185,7 +187,6 @@ function CreateTrip() {
         </div>
       </div>
 
-      {/* Submit button */}
       <div className="my-10 justify-end flex">
         <Button className="text-xl font-serif" onClick={onGenerateTrip}>
           Generate the Trip
