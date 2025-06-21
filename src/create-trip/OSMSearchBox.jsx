@@ -1,5 +1,7 @@
 import React, { useState, useRef } from "react";
 
+const LOCATIONIQ_TOKEN = import.meta.env.VITE_LOCATION_IQ_API_KEY;
+
 function OSMSearchBox({ onSelect }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -9,15 +11,10 @@ function OSMSearchBox({ onSelect }) {
   const handleChange = (e) => {
     const value = e.target.value;
     setQuery(value);
-
-    // Debounce search
     clearTimeout(debounceTimeout.current);
     debounceTimeout.current = setTimeout(() => {
-      if (value.length >= 3) {
-        fetchResults(value);
-      } else {
-        setResults([]);
-      }
+      if (value.length >= 3) fetchResults(value);
+      else setResults([]);
     }, 400);
   };
 
@@ -25,15 +22,9 @@ function OSMSearchBox({ onSelect }) {
     setLoading(true);
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+        `https://us1.locationiq.com/v1/search?key=${LOCATIONIQ_TOKEN}&q=${encodeURIComponent(
           value
-        )}&format=json&limit=5`,
-        {
-          headers: {
-            "Accept-Language": "en", // optional
-            "User-Agent": "YourAppName/1.0 (your.email@example.com)", // important for OSM
-          },
-        }
+        )}&format=json&limit=5`
       );
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
@@ -44,12 +35,6 @@ function OSMSearchBox({ onSelect }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSelect = (place) => {
-    setQuery(""); // clear input after selection
-    setResults([]);
-    onSelect?.(place);
   };
 
   return (
@@ -71,7 +56,11 @@ function OSMSearchBox({ onSelect }) {
           {results.map((place, idx) => (
             <li
               key={idx}
-              onClick={() => handleSelect(place)}
+              onClick={() => {
+                setQuery(place.display_name);
+                setResults([]);
+                onSelect(place);
+              }}
               className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
             >
               {place.display_name}

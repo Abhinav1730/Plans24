@@ -199,9 +199,14 @@ function CreateTrip() {
             <OSMSearchBox
               onSelect={(place) => {
                 setSelectedDestination(place);
-                handleInputChange("location", place);
+                handleInputChange("location", {
+                  name: place.display_name,
+                  lat: place.lat,
+                  lon: place.lon,
+                });
               }}
             />
+
             {selectedDestination && (
               <p className="mt-3 text-white bg-transparent text-base sm:text-lg font-serif break-words">
                 You Selected : {selectedDestination.display_name}
@@ -247,7 +252,9 @@ function CreateTrip() {
                 <h2 className="font-bold text-white text-lg font-serif">
                   {item.title}
                 </h2>
-                <h2 className="text-sm text-white font-serif">{item.description}</h2>
+                <h2 className="text-sm text-white font-serif">
+                  {item.description}
+                </h2>
               </div>
             ))}
           </div>
@@ -273,7 +280,9 @@ function CreateTrip() {
                 <h2 className="font-bold text-white font-serif text-lg">
                   {item.title}
                 </h2>
-                <h2 className="text-sm text-white font-serif">{item.description}</h2>
+                <h2 className="text-sm text-white font-serif">
+                  {item.description}
+                </h2>
               </div>
             ))}
           </div>
@@ -299,7 +308,11 @@ function CreateTrip() {
         <DialogContent>
           <DialogHeader>
             <DialogDescription className="text-center">
-              <img className="w-24 rounded-full mx-auto" src="/logo-plans24.png" alt="" />
+              <img
+                className="w-24 rounded-full mx-auto"
+                src="/logo-plans24.png"
+                alt=""
+              />
               <h2 className="font-bold text-lg font-serif mt-7">
                 Sign In With Google
               </h2>
