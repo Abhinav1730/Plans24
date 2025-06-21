@@ -17,10 +17,12 @@ import {
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 import { FcGoogle } from "react-icons/fc";
+import { CiCirclePlus } from "react-icons/ci";
 
 function Header() {
   const user = JSON.parse(localStorage.getItem("user"));
   const [openDialogForLogin, setOpenDialogueForLogin] = useState(false);
+
   useEffect(() => {
     console.log(user);
   }, []);
@@ -55,13 +57,22 @@ function Header() {
       <div>
         {user ? (
           <div className="flex items-center gap-5">
-            <Button
-              varient="outline"
-              className="rounded-full bg-white border border-red-600 text-red-600"
-            >
-              My Trips
-            </Button>
-
+            <a href="/create-trip">
+              <Button
+                varient="outline"
+                className="rounded-full bg-white border border-red-600 text-red-600 hover:bg-white"
+              >
+                New Trip <CiCirclePlus />
+              </Button>
+            </a>
+            <a href="/my-trips">
+              <Button
+                varient="outline"
+                className="rounded-full bg-white border border-red-600 text-red-600 hover:bg-white"
+              >
+                My Trips
+              </Button>
+            </a>
             <Popover>
               <PopoverTrigger>
                 <img
@@ -85,10 +96,12 @@ function Header() {
             </Popover>
           </div>
         ) : (
-          <Button onClick={() => setOpenDialogueForLogin()}>Get Started</Button>
+          <Button onClick={() => setOpenDialogueForLogin(true)}>
+            Get Started
+          </Button>
         )}
       </div>
-      <Dialog open={openDialogForLogin}>
+      <Dialog open={openDialogForLogin} onOpenChange={setOpenDialogueForLogin}>
         <DialogContent>
           <DialogHeader>
             <DialogDescription>
@@ -105,7 +118,7 @@ function Header() {
                 onClick={loginWithGoogle}
                 className="w-full mt-5 font-serif flex items-center"
               >
-                <FcGoogle className="h-7 w-7" /> Sign In
+                <FcGoogle className="h-7 w-7 mr-2" /> Sign In
               </Button>
             </DialogDescription>
           </DialogHeader>
