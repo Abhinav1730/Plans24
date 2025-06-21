@@ -1,6 +1,4 @@
-import { Button } from "../../components/ui/button";
 import React from "react";
-import { CiLocationOn } from "react-icons/ci";
 import { Link } from "react-router-dom";
 
 function PlacesCard({ plan }) {
@@ -9,21 +7,20 @@ function PlacesCard({ plan }) {
       to={"https://www.google.com/maps/search/?api=1&query=" + plan?.placeName}
       target="_blank"
     >
-      <div className="shadow-md border rounded-xl p-3 mt-2 flex gap-3 hover:scale-105 transition-all cursor-pointer">
+      <div className="shadow-md border rounded-xl p-3 mt-2 flex flex-wrap md:flex-nowrap gap-3 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden">
         <img
           src="/place-1.jpg"
           alt=""
-          className="w-[140px] h-[140px] rounded-xl"
+          className="w-full max-w-[140px] h-auto rounded-xl object-cover border border-red-600 shrink-0"
         />
-        <div>
-          <h2 className="font-bold font-serif text-lg md:text-xs">
+        <div className="flex-1 min-w-0">
+          <h2 className="font-bold font-serif text-lg sm:text-md md:text-base truncate">
             {plan?.placeName}
           </h2>
-          <p className="text-sm text-gray-500 md:text-xs">
+          <p className="text-sm sm:text-xs text-gray-500 break-words line-clamp-3">
             {plan?.placeDetails}
           </p>
-          <h2 className="mt-2 font-serif">⌛ {plan?.timeToTravel}</h2>
-          {/* <Button size="sm" className="mt-2 bg-white border border-red-600"><CiLocationOn className='text-red-600'/></Button> */}
+          <h2 className="mt-2 font-serif text-sm">⌛ {plan?.timeToTravel}</h2>
         </div>
       </div>
     </Link>
