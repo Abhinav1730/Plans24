@@ -25,9 +25,15 @@ function OSMSearchBox({ onSelect }) {
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/nominatim/search?q=${encodeURIComponent(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
           value
-        )}&format=json&limit=5`
+        )}&format=json&limit=5`,
+        {
+          headers: {
+            "Accept-Language": "en", // optional
+            "User-Agent": "YourAppName/1.0 (your.email@example.com)", // important for OSM
+          },
+        }
       );
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
