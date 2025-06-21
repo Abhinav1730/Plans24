@@ -77,8 +77,8 @@ function Header() {
               <PopoverTrigger>
                 <img
                   src={user?.picture}
-                  alt=""
-                  className="h-[45px] w-[45px] rounded-full"
+                  alt="user"
+                  className="h-10 w-10 sm:h-11 sm:w-11 md:h-[45px] md:w-[45px] rounded-full object-cover"
                 />
               </PopoverTrigger>
               <PopoverContent>
