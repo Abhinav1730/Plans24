@@ -13,7 +13,7 @@ function PlacesCard({ plan }) {
         if (url) setImageUrl(url);
       } catch (error) {
         console.error("Image fetch failed:", error);
-        setImageUrl("/place-1.jpg");
+        setImageUrl("/place-11.jpg");
       }
     };
 
@@ -38,7 +38,9 @@ function PlacesCard({ plan }) {
           <p className="text-sm sm:text-xs text-gray-500 break-words line-clamp-3">
             {plan?.placeDetails}
           </p>
-          <h2 className="mt-2 font-serif text-sm">⌛ {plan?.timeToTravel}</h2>
+          <h2 className="mt-2 font-serif text-sm">
+            ⌛ {plan?.timeToTravel} Min
+          </h2>
         </div>
       </div>
     </Link>

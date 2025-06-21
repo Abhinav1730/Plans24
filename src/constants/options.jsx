@@ -16,7 +16,8 @@ export const SelectTravelList = [
   {
     id: 3,
     title: "Family",
-    description: "A Group of fun loving people who love adventure and exploration.",
+    description:
+      "A Group of fun loving people who love adventure and exploration.",
     icon: "🏠",
     people: "3 to 5 People",
   },
@@ -50,7 +51,38 @@ export const SelectBudgetOptions = [
   },
 ];
 
-export const AI_PROMPT = `Generate Travel Plan for Location : {location}, for {days} days for {travelWith} with a {budget} budget. 
-Give me a Hotels options list with HotelName, Hotel address, Price, Hotel image url, geo Coordinates, rating, description 
-and suggest itinerary with placeName, Place Details, Place Image Url, Geo Coordinates, ticket Pricing, Time to travel each of the location 
-for {days} days with each day plan with best time to visit in JSON format.`;
+export const AI_PROMPT = `
+Generate a detailed Travel Plan in JSON format for the following inputs:
+Location: {location}
+Duration: {days} days
+Travel With: {travelWith}
+Budget: {budget}
+
+Your JSON output MUST contain the following top-level keys:
+- location (string): The location name
+- duration_days (number): Number of days
+- travel_style (string): Travel style or travelWith value
+- budget (string): Budget description
+- hotelOptions (array): List of hotel objects with keys:
+  * hotelName (string)
+  * hotelAddress (string)
+  * priceRange (string)
+  * hotelImageUrl (string)
+  * geoCoordinates (object with lat and lng)
+  * rating (number)
+  * description (string)
+- itinerary (array): Array of day objects with keys:
+  * day (number)
+  * plan (array): Each plan item with keys:
+    - placeName (string)
+    - placeDetails (string)
+    - placeImageUrl (string)
+    - geoCoordinates (object with lat and lng)
+    - ticketPricing (string)
+    - timeToTravel (number, minutes)
+    - timeSlot (string)
+    - bestTimeToVisit (string)
+
+DO NOT include any other keys or wrap this object inside another object. 
+ONLY output the JSON object matching the above structure.
+`;

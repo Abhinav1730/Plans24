@@ -8,7 +8,7 @@ function Itenary({ trip }) {
         Your Recommended Itenary
       </h2>
       <div>
-        {trip?.tripData?.travelPlan?.itinerary?.map((item, index) => (
+        {trip?.tripData?.itinerary?.map((item, index) => (
           <div key={index}>
             <h2 className="font-extrabold font-serif text-lg mt-5">
               Day {item?.day}

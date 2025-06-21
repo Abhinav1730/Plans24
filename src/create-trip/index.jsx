@@ -60,10 +60,6 @@ function CreateTrip() {
   });
 
   useEffect(() => {
-    console.log("formData updated:", formData);
-  }, [formData]);
-
-  useEffect(() => {
     const interval = setInterval(() => {
       setCurrentBackGroundImageIndex((prevIndex) =>
         prevIndex === backGroundImages.length - 1 ? 0 : prevIndex + 1
@@ -72,9 +68,7 @@ function CreateTrip() {
     return () => clearInterval(interval);
   }, []);
 
-  //method to generate trip from AI Model
   const onGenerateTrip = async () => {
-    //checking for the user if logined or not
     const user = localStorage.getItem("user");
     if (!user) {
       setOpenDialogueForLogin(true);
@@ -99,59 +93,64 @@ function CreateTrip() {
       .replace("{travelWith}", formData?.travelWith?.title)
       .replace("{budget}", formData?.budget?.title);
 
-    console.log("Prompt to Gemini:", FINAL_PROMPT);
-
     try {
       const result = await generateTrip(FINAL_PROMPT);
-      console.log("AI response:", result);
+      console.log("Raw AI response:", result);
+
+      // Extract JSON content (strip markdown fences if present)
+      const match = result.match(/```json\s*([\s\S]*?)```|({[\s\S]*})/);
+      const jsonString = match ? match[1] || match[2] : null;
+
+      if (!jsonString) {
+        throw new Error("No valid JSON found in AI response");
+      }
+
+      const parsedData = JSON.parse(jsonString);
+
       setLoading(false);
-      SaveAITrip(result);
+      SaveAITrip(parsedData);
       toast.success("Trip generated successfully!");
     } catch (error) {
-      console.error("Error from Gemini:", error);
-      toast.error("Failed to generate the trip.");
+      console.error("JSON parsing failed:", error);
+      toast.error("Failed to parse AI response.");
+      setLoading(false);
     }
   };
 
-  //Method to save Generated Trip in Firebase
- const SaveAITrip = async (TripData) => {
-  setLoading(true);
-  const user = JSON.parse(localStorage.getItem("user"));
-  const docId = Date.now().toString();
+  const SaveAITrip = async (TripData) => {
+    setLoading(true);
+    const user = JSON.parse(localStorage.getItem("user"));
+    const docId = Date.now().toString();
 
-  let parsedTripData = TripData;
+    let parsedTripData = TripData;
 
-  // If it's a string (i.e., contains markdown or raw JSON text)
-  if (typeof TripData === "string") {
-    try {
-      // Clean markdown-style code fencing if present
-      const cleanedJson = TripData
-        .replace(/^```(json)?/i, "") // remove ```json or ```
-        .replace(/```$/, "") // remove ending ```
-        .trim();
+    if (typeof TripData === "string") {
+      try {
+        const match = TripData.match(/```json\s*([\s\S]*?)```|({[\s\S]*})/);
+        const jsonString = match ? match[1] || match[2] : null;
 
-      parsedTripData = JSON.parse(cleanedJson);
-    } catch (err) {
-      console.error("JSON parsing failed:", err);
-      toast.error("AI response format is invalid.");
-      setLoading(false);
-      return;
+        if (!jsonString) throw new Error("No valid JSON found in AI response");
+
+        parsedTripData = JSON.parse(jsonString);
+      } catch (err) {
+        console.error("JSON parsing failed:", err);
+        toast.error("AI response format is invalid.");
+        setLoading(false);
+        return;
+      }
     }
-  }
 
-  await setDoc(doc(db, "AIGeneratedTrips", docId), {
-    userSelection: formData,
-    tripData: parsedTripData,
-    userEmail: user?.email,
-    id: docId,
-  });
+    await setDoc(doc(db, "AIGeneratedTrips", docId), {
+      userSelection: formData,
+      tripData: parsedTripData,
+      userEmail: user?.email,
+      id: docId,
+    });
 
-  setLoading(false);
-  navigate("/view-trip/" + docId);
-};
+    setLoading(false);
+    navigate("/view-trip/" + docId);
+  };
 
-
-  //Method to get user details from google
   const GetUserProfile = (tokenInformation) => {
     axios
       .get(
@@ -164,10 +163,13 @@ function CreateTrip() {
         }
       )
       .then((response) => {
-        console.log(response);
         localStorage.setItem("user", JSON.stringify(response.data));
         setOpenDialogueForLogin(false);
         onGenerateTrip();
+      })
+      .catch((error) => {
+        console.error("Google profile fetch failed:", error);
+        toast.error("Failed to fetch Google profile.");
       });
   };
 
@@ -291,6 +293,7 @@ function CreateTrip() {
           )}
         </Button>
       </div>
+
       <Dialog open={openDialogForLogin}>
         <DialogContent>
           <DialogHeader>
@@ -309,7 +312,6 @@ function CreateTrip() {
                 onClick={loginWithGoogle}
                 className="w-full mt-5 font-serif flex items-center"
               >
-                {" "}
                 <FcGoogle className="h-7 w-7" /> Sign In
               </Button>
             </DialogDescription>

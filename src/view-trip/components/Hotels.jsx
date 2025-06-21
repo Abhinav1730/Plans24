@@ -7,7 +7,7 @@ function Hotels({ trip }) {
 
   useEffect(() => {
     const fetchImages = async () => {
-      const hotels = trip?.tripData?.travelPlan?.hotelsOptions || [];
+      const hotels = trip?.tripData?.hotelOptions || [];
 
       const results = await Promise.all(
         hotels.map(async (hotel) => {
@@ -32,7 +32,7 @@ function Hotels({ trip }) {
       setHotelImages(imageMap);
     };
 
-    if (trip?.tripData?.travelPlan?.hotelsOptions?.length) {
+    if (trip?.tripData?.hotelOptions?.length) {
       fetchImages();
     }
   }, [trip]);
@@ -43,7 +43,7 @@ function Hotels({ trip }) {
         Hotel Recommendations
       </h2>
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 mt-5">
-        {trip?.tripData?.travelPlan?.hotelsOptions?.map((hotel, index) => (
+        {trip?.tripData?.hotelOptions?.map((hotel, index) => (
           <Link
             key={index}
             to={`https://www.google.com/maps/search/?api=1&query=${hotel.hotelName},${hotel.hotelAddress}`}
@@ -51,7 +51,7 @@ function Hotels({ trip }) {
           >
             <div className="hover:scale-105 transition-all cursor-pointer">
               <img
-                src={hotelImages[hotel.hotelName] || "/place-1.jpg"}
+                src={hotelImages[hotel.hotelName] || "/hotel.avif"}
                 className="rounded-lg border border-red-600 h-[180px] w-full object-cover"
                 alt={hotel.hotelName}
               />
@@ -60,7 +60,7 @@ function Hotels({ trip }) {
                 <h2 className="text-gray-600 font-serif text-xs">
                   📍 {hotel.hotelAddress}
                 </h2>
-                <h2 className="font-serif text-sm">{hotel.priceRange}</h2>
+                <h2 className="font-serif text-sm">Rs. {hotel.priceRange}</h2>
                 <h2 className="font-serif text-sm">🌟 {hotel.rating}</h2>
               </div>
             </div>
