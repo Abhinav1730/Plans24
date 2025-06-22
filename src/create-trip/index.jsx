@@ -219,11 +219,11 @@ function CreateTrip() {
             </h2>
             <div className="w-full max-w-md">
               <Input
-                placeholder={"Example: 3"}
+                placeholder="Example: 3"
                 type="number"
                 value={formData.days}
                 onChange={(e) => handleInputChange("days", e.target.value)}
-                className="rounded-xl border-red-500 bg-white text-gray-400 w-full text-lg sm:text-xl"
+                className="rounded-xl font-serif  border-red-500 bg-white text-gray-800 placeholder:text-gray-400 w-full text-lg sm:text-xl"
               />
             </div>
           </div>
