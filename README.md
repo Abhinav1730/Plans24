@@ -1,12 +1,43 @@
-# React + Vite
+# Plans24 ✈️
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An advanced itinerary planning app built with **React.js** that leverages **Google Gemini AI** to generate personalized trip itineraries. It features a sleek, interactive UI and integrates with Firebase and multiple APIs for a smooth user experience.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Table of Contents
 
-## Expanding the ESLint configuration
+- [About](#about)  
+- [Features](#features)  
+- [Tech Stack](#tech-stack)   
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## 🌎 About
+
+**Plans24** allows users to:
+- Input travel details: destination, number of days, budget, travelers  
+- Generate a tailored itinerary via **Google Gemini AI**  
+- Access beautiful design and intuitive UI powered by **React.js**  
+
+---
+
+## ✨ Features
+
+- Search destinations using **LocationIQ**  
+- Upload optional user preferences  
+- Gemini AI-powered itinerary generation  
+- Sign-in with **Google Auth**  
+- Fetch high-quality images with **Unsplash API**  
+- Store user data and trips securely in **Firebase**
+
+---
+
+## 🧩 Tech Stack
+
+- **Frontend**: React.js, CSS (or your UI library of choice)  
+- **Backend**: Firebase (Auth, Firestore), serverless functions  
+- **APIs**:  
+  - Google Gemini AI (trip plan generation)  
+  - LocationIQ (location lookup)  
+  - Unsplash (images)  
+- **Authentication**: Google Auth API
