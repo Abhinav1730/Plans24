@@ -38,21 +38,21 @@ function OSMSearchBox({ onSelect }) {
   };
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full max-w-xl mx-auto">
       <input
         type="text"
         value={query}
         onChange={handleChange}
         placeholder="Search for a destination"
-        className="w-full px-4 py-2 border rounded-2xl border-black"
+        className="w-full px-4 py-3 rounded-2xl border border-gray-400 font-body text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-red-300 transition"
       />
       {loading && (
-        <div className="absolute top-full mt-1 text-sm text-gray-500 px-2">
+        <div className="absolute top-full mt-1 bg-white px-3 py-1 rounded-b text-sm text-gray-500">
           Loading...
         </div>
       )}
       {results.length > 0 && (
-        <ul className="absolute z-10 bg-white border w-full mt-1 shadow rounded max-h-60 overflow-y-auto">
+        <ul className="absolute z-10 bg-white border border-gray-300 w-full mt-1 shadow-lg rounded-b-md max-h-60 overflow-y-auto">
           {results.map((place, idx) => (
             <li
               key={idx}
@@ -61,7 +61,7 @@ function OSMSearchBox({ onSelect }) {
                 setResults([]);
                 onSelect(place);
               }}
-              className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+              className="px-4 py-2 hover:bg-gray-100 cursor-pointer font-body text-base sm:text-lg"
             >
               {place.display_name}
             </li>
@@ -73,3 +73,4 @@ function OSMSearchBox({ onSelect }) {
 }
 
 export default OSMSearchBox;
+
