@@ -62,7 +62,7 @@ function Hotels({ trip }) {
                   {hotel.hotelName}
                 </h2>
                 <h2 className="font-serif text-gray-600 text-xs flex items-center gap-1">
-                  <span>📍</span> {hotel.hotelAddress}
+                  📍 {hotel.hotelAddress}
                 </h2>
                 <h2 className="font-serif text-sm">Rs. {hotel.priceRange}</h2>
                 <h2 className="font-serif text-sm">🌟 {hotel.rating}</h2>

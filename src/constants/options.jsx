@@ -79,10 +79,14 @@ Your JSON output MUST contain the following top-level keys:
     - placeImageUrl (string)
     - geoCoordinates (object with lat and lng)
     - ticketPricing (string)
-    - timeToTravel (number, minutes)
-    - timeSlot (string)
+    - timeToTravel (number, in minutes)
+    - timeSlot (string in the format: "HH A.M. - HH A.M." or "HH P.M. - HH P.M.")
     - bestTimeToVisit (string)
 
-DO NOT include any other keys or wrap this object inside another object. 
-ONLY output the JSON object matching the above structure.
+IMPORTANT:
+- All timeSlot values must be strictly formatted as either "HH A.M. - HH A.M." or "HH P.M. - HH P.M." (e.g., "09 A.M. - 11 A.M.", "02 P.M. - 04 P.M.")
+- DO NOT include any keys outside of those specified.
+- DO NOT wrap the output in any variable or outer object.
+- ONLY return a valid JSON object matching the structure above.
 `;
+
