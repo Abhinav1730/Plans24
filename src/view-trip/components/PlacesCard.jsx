@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { GetPlaceImage } from "../../services/GlobalApi"; // adjust path as needed
+import { GetPlaceImage } from "../../services/GlobalApi";
 
 function PlacesCard({ plan }) {
   const [imageUrl, setImageUrl] = useState("/place-1.jpg");
@@ -22,28 +22,27 @@ function PlacesCard({ plan }) {
 
   return (
     <Link
-      to={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-        plan?.placeName
-      )}`}
+      to={`https://www.google.com/maps/search/?api=1&query=${plan?.placeName}`}
       target="_blank"
       rel="noopener noreferrer"
     >
-      <div className="shadow-md border rounded-xl p-3 mt-2 flex flex-wrap md:flex-nowrap gap-3 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden bg-white">
+      <div className="shadow-md border rounded-xl p-3 mt-2 flex flex-col md:flex-row gap-4 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden">
+        {/* Image section */}
         <img
           src={imageUrl}
           alt={plan?.placeName}
-          className="w-full max-w-[140px] h-[100px] rounded-xl object-cover border border-red-600 shrink-0"
+          className="w-full md:w-[140px] h-[180px] md:h-[100px] rounded-xl object-cover border border-red-600"
         />
-        <div className="flex-1 min-w-0">
-          <h2 className="font-serif font-bold text-lg sm:text-md md:text-base truncate">
+
+        {/* Details section */}
+        <div className="flex flex-col justify-between">
+          <h2 className="font-serif font-bold text-lg sm:text-base truncate">
             {plan?.placeName}
           </h2>
-          <p className="font-serif text-sm sm:text-xs text-gray-500 break-words line-clamp-3">
+          <p className="font-poppins text-sm sm:text-xs text-gray-500 mt-1 line-clamp-3">
             {plan?.placeDetails}
           </p>
-          <h2 className="mt-2 font-serif text-sm">
-            ⌛ {plan?.timeToTravel} Min
-          </h2>
+          <h2 className="font-serif text-sm mt-2">⌛ {plan?.timeToTravel} Min</h2>
         </div>
       </div>
     </Link>
@@ -51,4 +50,5 @@ function PlacesCard({ plan }) {
 }
 
 export default PlacesCard;
+
 
