@@ -66,7 +66,7 @@ function CreateTrip() {
           prevIndex === backGroundImages.length - 1 ? 0 : prevIndex + 1
         );
         setIsFading(false);
-      }, 500);
+      }, 100);
     }, 10000);
     return () => clearInterval(interval);
   }, []);
