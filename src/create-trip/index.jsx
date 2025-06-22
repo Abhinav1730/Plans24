@@ -22,6 +22,8 @@ import axios from "axios";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "../services/firebaseConfig";
 import { useNavigate } from "react-router-dom";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const backGroundImages = [
   "/place-5.jpg",
@@ -33,17 +35,18 @@ const backGroundImages = [
 
 function CreateTrip() {
   const navigate = useNavigate();
-  const [currentBackGroundImageIndex, setCurrentBackGroundImageIndex] = useState(0);
+  const [currentBackGroundImageIndex, setCurrentBackGroundImageIndex] =
+    useState(0);
   const [selectedDestination, setSelectedDestination] = useState(null);
   const [loading, setLoading] = useState(false);
   const [openDialogForLogin, setOpenDialogueForLogin] = useState(false);
-  const [isFading, setIsFading] = useState(false);
 
   const [formData, setFormData] = useState({
     location: null,
     days: "",
     budget: null,
     travelWith: null,
+    preferredDate: null,
   });
 
   const handleInputChange = (name, value) => {
@@ -53,23 +56,20 @@ function CreateTrip() {
     }));
   };
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentBackGroundImageIndex((prevIndex) =>
+        prevIndex === backGroundImages.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 10000); // change every 10sec
+
+    return () => clearInterval(interval);
+  }, []);
+
   const loginWithGoogle = useGoogleLogin({
     onSuccess: (codeResponse) => GetUserProfile(codeResponse),
     onError: (error) => console.log(error),
   });
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIsFading(true);
-      setTimeout(() => {
-        setCurrentBackGroundImageIndex((prevIndex) =>
-          prevIndex === backGroundImages.length - 1 ? 0 : prevIndex + 1
-        );
-        setIsFading(false);
-      }, 100);
-    }, 10000);
-    return () => clearInterval(interval);
-  }, []);
 
   const onGenerateTrip = async () => {
     const user = localStorage.getItem("user");
@@ -84,14 +84,21 @@ function CreateTrip() {
       return toast.error("Trip duration cannot exceed 7 days.");
     if (!formData.budget || !formData.travelWith)
       return toast.error("Select your budget and travel preference.");
+    if (!formData.preferredDate)
+      return toast.error("Please select a preferred start date.");
 
     toast.success("All details valid! Generating your trip...");
     setLoading(true);
 
-    const FINAL_PROMPT = AI_PROMPT.replace("{location}", formData?.location?.name)
+    const formattedDate = formData.preferredDate.toISOString().split("T")[0];
+    const FINAL_PROMPT = AI_PROMPT.replace(
+      "{location}",
+      formData?.location?.name
+    )
       .replace(/{days}/g, formData?.days)
       .replace("{travelWith}", formData?.travelWith?.title)
-      .replace("{budget}", formData?.budget?.title);
+      .replace("{budget}", formData?.budget?.title)
+      .replace("{preferredDate}", formattedDate);
 
     try {
       const result = await generateTrip(FINAL_PROMPT);
@@ -142,12 +149,15 @@ function CreateTrip() {
 
   const GetUserProfile = (tokenInformation) => {
     axios
-      .get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${tokenInformation?.access_token}`, {
-        headers: {
-          Authorization: `Bearer ${tokenInformation?.access_token}`,
-          Accept: "Application/json",
-        },
-      })
+      .get(
+        `https://www.googleapis.com/oauth2/v1/userinfo?access_token=${tokenInformation?.access_token}`,
+        {
+          headers: {
+            Authorization: `Bearer ${tokenInformation?.access_token}`,
+            Accept: "Application/json",
+          },
+        }
+      )
       .then((response) => {
         localStorage.setItem("user", JSON.stringify(response.data));
         setOpenDialogueForLogin(false);
@@ -161,19 +171,22 @@ function CreateTrip() {
 
   return (
     <div
-      className={`w-full min-h-screen bg-cover bg-center flex flex-col items-center justify-center gap-9 transition-all duration-1000 ease-in-out rounded-2xl px-4 sm:px-8 md:px-16 lg:px-24 xl:px-40 ${
-        isFading ? "opacity-0" : "opacity-100"
-      }`}
+      className="relative w-full min-h-screen bg-cover bg-center flex flex-col items-center justify-center px-4 sm:px-8 md:px-16 lg:px-24 xl:px-40"
       style={{
         backgroundImage: `url(${backGroundImages[currentBackGroundImageIndex]})`,
       }}
     >
-      <div className="max-w-7xl w-full mt-10">
+      {/* Translucent overlay */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-0" />
+
+      {/* Foreground content */}
+      <div className="relative z-10 w-full max-w-7xl mt-10">
         <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white">
           Tell us your <span className="text-red-100">Travel Preference</span>
         </h2>
         <p className="text-base sm:text-xl text-gray-100 font-sans">
-          Tell us your destination, travel dates, budget, and interests — we’ll craft the perfect itinerary tailored just for you!
+          Tell us your destination, travel dates, budget, and interests — we’ll
+          craft the perfect itinerary tailored just for you!
         </p>
 
         <div className="mt-20 flex flex-col gap-9 max-w-4xl mx-auto">
@@ -211,6 +224,23 @@ function CreateTrip() {
                 value={formData.days}
                 onChange={(e) => handleInputChange("days", e.target.value)}
                 className="rounded-xl border-red-500 bg-white text-gray-400 w-full text-lg sm:text-xl"
+              />
+            </div>
+          </div>
+
+          {/* Preferred Start Date */}
+          <div className="w-full flex flex-col items-center">
+            <h2 className="text-xl sm:text-2xl my-3 font-medium text-white font-serif text-center">
+              Preferred Start Date
+            </h2>
+            <div className="w-full max-w-md">
+              <DatePicker
+                selected={formData.preferredDate}
+                onChange={(date) => handleInputChange("preferredDate", date)}
+                minDate={new Date()}
+                className="w-full rounded-xl border border-red-500 px-3 py-2 text-gray-800 text-lg sm:text-xl"
+                placeholderText="Select your trip start date"
+                dateFormat="yyyy-MM-dd"
               />
             </div>
           </div>
@@ -276,7 +306,7 @@ function CreateTrip() {
         </div>
       </div>
 
-      <div className="my-10 justify-center flex w-full max-w-7xl px-2">
+      <div className="my-10 justify-center flex w-full max-w-7xl px-2 relative z-10">
         <Button
           disabled={loading}
           className="text-lg sm:text-xl font-poppins px-6 py-3 w-full max-w-xs"
@@ -320,4 +350,3 @@ function CreateTrip() {
 }
 
 export default CreateTrip;
-
