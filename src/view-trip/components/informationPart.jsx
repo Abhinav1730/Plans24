@@ -23,7 +23,7 @@ function InformationPart({ trip }) {
       if (imageUrl) {
         setImageUrl(imageUrl);
       } else {
-        setImageUrl(""); // local fallback
+        setImageUrl(""); // fallback
       }
     } catch (error) {
       console.error("Failed to fetch place photo:", error);
@@ -38,25 +38,25 @@ function InformationPart({ trip }) {
         alt={trip?.userSelection?.location?.name || "Place"}
         className="h-[340px] w-full object-cover rounded-xl"
       />
-      <div className="flex justify-between items-center">
-        <div className="my-5 flex flex-col gap-5 items-start">
-          <h2 className="font-bold font-serif text-4xl">
+      <div className="flex justify-between items-center mt-5">
+        <div className="flex flex-col gap-5 items-start">
+          <h2 className="font-serif font-bold text-4xl">
             {trip?.userSelection?.location?.name}
           </h2>
           <div className="flex gap-5 flex-wrap">
             <h2 className="p-1 px-3 bg-red-100 rounded-full text-gray-500 font-serif text-xs md:text-lg">
               🗓️ {trip?.userSelection?.days} Day Trip
             </h2>
-            <h2 className="p-1 px-3 bg-red-100 rounded-full text-gray-500 text-xs md:text-lg font-serif">
+            <h2 className="p-1 px-3 bg-red-100 rounded-full text-gray-500 font-serif text-xs md:text-lg">
               💱 {trip?.userSelection?.budget?.title} Budget
             </h2>
-            <h2 className="p-1 px-3 bg-red-100 rounded-full text-gray-500 text-xs md:text-lg font-serif">
+            <h2 className="p-1 px-3 bg-red-100 rounded-full text-gray-500 font-serif text-xs md:text-lg">
               👨‍👩‍👧‍👦 {trip?.userSelection?.travelWith?.title}
             </h2>
           </div>
         </div>
         <Button>
-          <IoMdShare />
+          <IoMdShare className="text-xl" />
         </Button>
       </div>
     </div>
@@ -64,3 +64,4 @@ function InformationPart({ trip }) {
 }
 
 export default InformationPart;
+
