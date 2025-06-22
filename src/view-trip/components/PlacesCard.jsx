@@ -42,7 +42,9 @@ function PlacesCard({ plan }) {
           <p className="font-poppins text-sm sm:text-xs text-gray-500 mt-1 line-clamp-3">
             {plan?.placeDetails}
           </p>
-          <h2 className="font-serif text-sm mt-2">⌛ {plan?.timeToTravel} Min</h2>
+          <h2 className="font-serif text-sm mt-2">
+            ⌛ {plan?.timeToTravel} Min
+          </h2>
         </div>
       </div>
     </Link>
@@ -50,5 +52,3 @@ function PlacesCard({ plan }) {
 }
 
 export default PlacesCard;
-
-
