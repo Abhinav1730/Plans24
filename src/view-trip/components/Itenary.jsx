@@ -1,4 +1,4 @@
-import React from "react";
+ import React from "react";
 import PlacesCard from "./PlacesCard";
 
 function Itenary({ trip }) {
@@ -31,4 +31,4 @@ function Itenary({ trip }) {
   );
 }
 
-export default Itenary;
+export default Itenary

@@ -24,6 +24,7 @@ import { db } from "../services/firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { getWeatherForecast } from "../services/WeatherApi";
 
 const backGroundImages = [
   "/place-5.jpg",
@@ -35,8 +36,7 @@ const backGroundImages = [
 
 function CreateTrip() {
   const navigate = useNavigate();
-  const [currentBackGroundImageIndex, setCurrentBackGroundImageIndex] =
-    useState(0);
+  const [currentBackGroundImageIndex, setCurrentBackGroundImageIndex] = useState(0);
   const [selectedDestination, setSelectedDestination] = useState(null);
   const [loading, setLoading] = useState(false);
   const [openDialogForLogin, setOpenDialogueForLogin] = useState(false);
@@ -49,297 +49,263 @@ function CreateTrip() {
     preferredDate: null,
   });
 
-  const handleInputChange = (name, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
+  // Background image slideshow
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentBackGroundImageIndex((prevIndex) =>
-        prevIndex === backGroundImages.length - 1 ? 0 : prevIndex + 1
+      setCurrentBackGroundImageIndex(
+        (prev) => (prev + 1) % backGroundImages.length
       );
-    }, 10000); // change every 10sec
-
+    }, 10000);
     return () => clearInterval(interval);
   }, []);
 
-  const loginWithGoogle = useGoogleLogin({
-    onSuccess: (codeResponse) => GetUserProfile(codeResponse),
-    onError: (error) => console.log(error),
-  });
-
-  const onGenerateTrip = async () => {
-    const user = localStorage.getItem("user");
-    if (!user) {
-      setOpenDialogueForLogin(true);
-      return;
-    }
-    if (!formData.location) return toast.error("Please enter a location!");
-    if (!formData.days || parseInt(formData.days) <= 0)
-      return toast.error("Please enter valid number of days.");
-    if (parseInt(formData.days) > 7)
-      return toast.error("Trip duration cannot exceed 7 days.");
-    if (!formData.budget || !formData.travelWith)
-      return toast.error("Select your budget and travel preference.");
-    if (!formData.preferredDate)
-      return toast.error("Please select a preferred start date.");
-
-    toast.success("All details valid! Generating your trip...");
-    setLoading(true);
-
-    const formattedDate = formData.preferredDate.toISOString().split("T")[0];
-    const FINAL_PROMPT = AI_PROMPT.replace(
-      "{location}",
-      formData?.location?.name
-    )
-      .replace(/{days}/g, formData?.days)
-      .replace("{travelWith}", formData?.travelWith?.title)
-      .replace("{budget}", formData?.budget?.title)
-      .replace("{preferredDate}", formattedDate);
-
-    try {
-      const result = await generateTrip(FINAL_PROMPT);
-      const match = result.match(/```json\s*([\s\S]*?)```|({[\s\S]*})/);
-      const jsonString = match ? match[1] || match[2] : null;
-      if (!jsonString) throw new Error("No valid JSON found in AI response");
-      const parsedData = JSON.parse(jsonString);
-      setLoading(false);
-      SaveAITrip(parsedData);
-      toast.success("Trip generated successfully!");
-    } catch (error) {
-      console.error("JSON parsing failed:", error);
-      toast.error("Failed to parse AI response.");
-      setLoading(false);
-    }
+  const handleInputChange = (name, value) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const SaveAITrip = async (TripData) => {
-    setLoading(true);
-    const user = JSON.parse(localStorage.getItem("user"));
-    const docId = Date.now().toString();
-
-    let parsedTripData = TripData;
-    if (typeof TripData === "string") {
-      try {
-        const match = TripData.match(/```json\s*([\s\S]*?)```|({[\s\S]*})/);
-        const jsonString = match ? match[1] || match[2] : null;
-        if (!jsonString) throw new Error("No valid JSON found in AI response");
-        parsedTripData = JSON.parse(jsonString);
-      } catch (err) {
-        console.error("JSON parsing failed:", err);
-        toast.error("AI response format is invalid.");
-        setLoading(false);
-        return;
-      }
-    }
-
-    await setDoc(doc(db, "AIGeneratedTrips", docId), {
-      userSelection: formData,
-      tripData: parsedTripData,
-      userEmail: user?.email,
-      id: docId,
-    });
-
-    setLoading(false);
-    navigate("/view-trip/" + docId);
-  };
-
-  const GetUserProfile = (tokenInformation) => {
+  // Google login success handler
+  const GetUserProfile = (tokenInfo) => {
     axios
       .get(
-        `https://www.googleapis.com/oauth2/v1/userinfo?access_token=${tokenInformation?.access_token}`,
-        {
-          headers: {
-            Authorization: `Bearer ${tokenInformation?.access_token}`,
-            Accept: "Application/json",
-          },
-        }
+        `https://www.googleapis.com/oauth2/v1/userinfo?access_token=${tokenInfo.access_token}`
       )
-      .then((response) => {
-        localStorage.setItem("user", JSON.stringify(response.data));
+      .then((resp) => {
+        localStorage.setItem("user", JSON.stringify(resp.data));
         setOpenDialogueForLogin(false);
         onGenerateTrip();
       })
-      .catch((error) => {
-        console.error("Google profile fetch failed:", error);
-        toast.error("Failed to fetch Google profile.");
+      .catch(() => toast.error("Google login failed."));
+  };
+
+  const loginWithGoogle = useGoogleLogin({
+    onSuccess: GetUserProfile,
+    onError: (err) => console.error(err),
+  });
+
+  // Main function to generate trip and fetch weather
+  const onGenerateTrip = async () => {
+    if (!localStorage.getItem("user")) return setOpenDialogueForLogin(true);
+    if (!formData.location) return toast.error("Enter a location");
+    if (!formData.days || +formData.days <= 0)
+      return toast.error("Enter valid days");
+    if (+formData.days > 7) return toast.error("Max 7 days allowed");
+    if (!formData.budget || !formData.travelWith)
+      return toast.error("Select budget & travel preference");
+    if (!formData.preferredDate) return toast.error("Pick a start date");
+
+    toast.success("Generating your trip...");
+    setLoading(true);
+
+    // Format date for API & prompt
+    const formattedDate = formData.preferredDate.toISOString().split("T")[0];
+    let weatherData = null;
+
+    // Fetch hourly weather for the start date
+    try {
+      weatherData = await getWeatherForecast(
+        formData.location.lat,
+        formData.location.lon,
+        formattedDate
+      );
+    } catch (err) {
+      console.error("Weather fetch error:", err);
+      toast.error("Failed to fetch weather");
+    }
+
+    // Prepare AI prompt
+    const FINAL_PROMPT = AI_PROMPT.replace("{location}", formData.location.name)
+      .replace(/{days}/g, formData.days)
+      .replace("{travelWith}", formData.travelWith.title)
+      .replace("{budget}", formData.budget.title)
+      .replace("{preferredDate}", formattedDate);
+
+    try {
+      // Call AI model to generate trip JSON
+      const res = await generateTrip(FINAL_PROMPT);
+      const json = res.match(/```json\s*([\s\S]*?)```|({[\s\S]*})/);
+      if (!json) throw new Error("No JSON found");
+      const parsed = JSON.parse(json[1] || json[2]);
+
+      // Attach weather data to trip data
+      const tripDataWithWeather = { ...parsed, weather: weatherData };
+      const tripId = Date.now().toString();
+
+      // Save trip in Firestore
+      await setDoc(doc(db, "AIGeneratedTrips", tripId), {
+        id: tripId,
+        userSelection: formData,
+        tripData: tripDataWithWeather,
+        userEmail: JSON.parse(localStorage.getItem("user")).email,
       });
+
+      setLoading(false);
+      toast.success("Trip ready! Redirecting...");
+      navigate(`/view-trip/${tripId}`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Trip generation failed.");
+      setLoading(false);
+    }
   };
 
   return (
     <div
-      className="relative w-full min-h-screen bg-cover bg-center flex flex-col items-center justify-center px-4 sm:px-8 md:px-16 lg:px-24 xl:px-40"
+      className="relative w-full min-h-screen bg-cover bg-center flex flex-col items-center justify-center px-4 sm:px-6 md:px-10 lg:px-20 xl:px-32"
       style={{
         backgroundImage: `url(${backGroundImages[currentBackGroundImageIndex]})`,
       }}
     >
-      {/* Translucent overlay */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-0" />
-
-      {/* Foreground content */}
-      <div className="relative z-10 w-full max-w-7xl mt-10">
-        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white">
-          Tell us your <span className="text-red-100">Travel Preference</span>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <div className="relative z-10 w-full max-w-6xl py-10 sm:py-12 px-2 sm:px-6 bg-black/30 rounded-lg backdrop-blur-md shadow-2xl">
+        <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white text-center">
+          Tell us your <span className="text-red-200">Travel Preference</span>
         </h2>
-        <p className="text-base sm:text-xl text-gray-100 font-sans">
-          Tell us your destination, travel dates, budget, and interests — we’ll
-          craft the perfect itinerary tailored just for you!
+        <p className="text-base sm:text-lg text-gray-100 font-sans text-center mt-2">
+          Share your destination, dates, budget & interests. We'll build a trip
+          plan!
         </p>
 
-        <div className="mt-20 flex flex-col gap-9 max-w-4xl mx-auto">
-          {/* Destination input */}
+        <div className="mt-10 space-y-8">
+          {/* Destination */}
           <div>
-            <h2 className="text-xl sm:text-2xl my-3 font-medium text-white font-serif">
-              What is your Destination?
-            </h2>
+            <h3 className="text-lg sm:text-xl font-medium text-white font-serif mb-2">
+              Destination
+            </h3>
             <OSMSearchBox
-              onSelect={(place) => {
-                setSelectedDestination(place);
+              onSelect={(pl) => {
+                setSelectedDestination(pl);
                 handleInputChange("location", {
-                  name: place.display_name,
-                  lat: place.lat,
-                  lon: place.lon,
+                  name: pl.display_name,
+                  lat: pl.lat,
+                  lon: pl.lon,
                 });
               }}
             />
             {selectedDestination && (
-              <p className="mt-3 text-white text-base sm:text-lg font-serif break-words">
-                You Selected: {selectedDestination.display_name}
+              <p className="mt-2 text-white font-serif text-sm">
+                {selectedDestination.display_name}
               </p>
             )}
           </div>
 
-          {/* Days input */}
-          <div className="w-full flex flex-col items-center">
-            <h2 className="text-xl sm:text-2xl my-3 font-medium text-white font-serif text-center">
-              How Many Days are you Planning the Trip?
-            </h2>
-            <div className="w-full max-w-md">
+          {/* Days */}
+          <div>
+            <h3 className="text-lg sm:text-xl font-medium text-white font-serif mb-2">
+              Days (max 7)
+            </h3>
+            <div className="flex justify-center">
               <Input
-                placeholder="Example: 3"
                 type="number"
                 value={formData.days}
                 onChange={(e) => handleInputChange("days", e.target.value)}
-                className="rounded-xl font-serif  border-red-500 bg-white text-gray-800 placeholder:text-gray-400 w-full text-lg sm:text-xl"
+                placeholder="1–7"
+                className="w-full sm:w-64 md:w-72 lg:w-80 rounded-xl border-red-400 bg-white text-gray-800 text-lg sm:text-xl px-3 py-2"
               />
             </div>
           </div>
 
-          {/* Preferred Start Date */}
-          <div className="w-full flex flex-col items-center">
-            <h2 className="text-xl sm:text-2xl my-3 font-medium text-white font-serif text-center">
-              Preferred Start Date
-            </h2>
-            <div className="w-full max-w-md">
-              <DatePicker
-                selected={formData.preferredDate}
-                onChange={(date) => handleInputChange("preferredDate", date)}
-                minDate={new Date()}
-                className="w-full rounded-xl border border-red-500 px-3 py-2 text-gray-800 text-lg sm:text-xl"
-                placeholderText="Select your trip start date"
-                dateFormat="yyyy-MM-dd"
-              />
+          {/* Preferred Date */}
+          <div>
+            <h3 className="text-lg sm:text-xl font-medium text-white font-serif mb-2">
+              Start Date
+            </h3>
+            <DatePicker
+              selected={formData.preferredDate}
+              onChange={(date) => handleInputChange("preferredDate", date)}
+              minDate={new Date()}
+              dateFormat="yyyy-MM-dd"
+              className="w-full max-w-md rounded-xl border-red-400 px-3 py-2 text-gray-800 text-lg sm:text-xl"
+              placeholderText="Select start date"
+            />
+          </div>
+
+          {/* Budget */}
+          <div>
+            <h3 className="text-lg sm:text-xl font-medium text-white font-serif mb-2">
+              Budget
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {SelectBudgetOptions.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => handleInputChange("budget", item)}
+                  className={`p-4 border rounded-lg cursor-pointer transition duration-200 ${
+                    formData.budget?.id === item.id
+                      ? "border-red-400 bg-white/10 shadow-lg"
+                      : "border-white/40"
+                  }`}
+                >
+                  <h2 className="text-3xl sm:text-4xl">{item.icon}</h2>
+                  <p className="text-white font-serif text-lg">{item.title}</p>
+                  <p className="text-white font-serif text-sm">
+                    {item.description}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
 
-        {/* Budget selection */}
-        <div className="mt-10 max-w-5xl mx-auto px-2">
-          <h2 className="text-xl sm:text-2xl my-3 font-medium text-white font-serif">
-            What is your Budget?
-          </h2>
-          <h3 className="text-base sm:text-xl my-3 font-medium text-white font-serif">
-            The Budget is exclusively for activities and dining purposes.
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {SelectBudgetOptions.map((item, index) => (
-              <div
-                key={index}
-                onClick={() => handleInputChange("budget", item)}
-                className={`p-4 border rounded-lg hover:shadow-xl cursor-pointer transition-all ${
-                  formData.budget?.title === item.title
-                    ? "border-red-400 shadow-lg"
-                    : "border-white"
-                }`}
-              >
-                <h2 className="text-4xl">{item.icon}</h2>
-                <h2 className="font-bold text-white text-lg font-serif">
-                  {item.title}
-                </h2>
-                <h2 className="text-sm text-white font-serif">
-                  {item.description}
-                </h2>
-              </div>
-            ))}
+          {/* Travel With */}
+          <div>
+            <h3 className="text-lg sm:text-xl font-medium text-white font-serif mb-2">
+              Travel With
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {SelectTravelList.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => handleInputChange("travelWith", item)}
+                  className={`p-4 border rounded-lg cursor-pointer transition duration-200 ${
+                    formData.travelWith?.id === item.id
+                      ? "border-red-400 bg-white/10 shadow-lg"
+                      : "border-white/40"
+                  }`}
+                >
+                  <h2 className="text-3xl sm:text-4xl">{item.icon}</h2>
+                  <p className="text-white font-serif text-lg">{item.title}</p>
+                  <p className="text-white font-serif text-sm">
+                    {item.description}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Travel with selection */}
-        <div className="mt-10 max-w-5xl mx-auto px-2">
-          <h2 className="text-xl sm:text-2xl my-3 font-medium text-white font-serif">
-            With whom do you plan on travelling with on your next Adventure?
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {SelectTravelList.map((item, index) => (
-              <div
-                key={index}
-                onClick={() => handleInputChange("travelWith", item)}
-                className={`p-4 border rounded-lg hover:shadow-xl cursor-pointer transition-all ${
-                  formData.travelWith?.title === item.title
-                    ? "border-red-400 shadow-lg"
-                    : "border-white"
-                }`}
-              >
-                <h2 className="text-4xl">{item.icon}</h2>
-                <h2 className="font-bold text-white font-serif text-lg">
-                  {item.title}
-                </h2>
-                <h2 className="text-sm text-white font-serif">
-                  {item.description}
-                </h2>
-              </div>
-            ))}
+          {/* Submit Button */}
+          <div className="flex justify-center mt-6">
+            <Button
+              onClick={onGenerateTrip}
+              disabled={loading}
+              className="px-6 py-3 text-lg sm:text-xl font-semibold bg-red-600 hover:bg-red-700"
+            >
+              {loading ? (
+                <AiOutlineLoading3Quarters className="animate-spin text-white text-2xl" />
+              ) : (
+                "Generate Trip"
+              )}
+            </Button>
           </div>
         </div>
       </div>
 
-      <div className="my-10 justify-center flex w-full max-w-7xl px-2 relative z-10">
-        <Button
-          disabled={loading}
-          className="text-lg sm:text-xl font-poppins px-6 py-3 w-full max-w-xs"
-          onClick={onGenerateTrip}
-        >
-          {loading ? (
-            <AiOutlineLoading3Quarters className="h-7 w-7 animate-spin" />
-          ) : (
-            "Generate the Trip"
-          )}
-        </Button>
-      </div>
-
-      {/* Dialog for Google Sign-in */}
+      {/* Google Login Dialog */}
       <Dialog open={openDialogForLogin} onOpenChange={setOpenDialogueForLogin}>
-        <DialogContent>
+        <DialogContent className="max-w-sm sm:max-w-md bg-white rounded-lg">
           <DialogHeader>
             <DialogDescription className="text-center">
               <img
-                className="w-24 rounded-full mx-auto"
                 src="/logo-plans24.png"
-                alt=""
+                alt="Logo"
+                className="mx-auto w-20 sm:w-24"
               />
-              <h2 className="font-bold text-lg font-serif mt-7">
-                Sign In With Google
+              <h2 className="mt-4 font-serif font-bold text-lg sm:text-xl">
+                Sign in with Google
               </h2>
-              <p>Sign Into the Plans24 using Google Authentication securely</p>
               <Button
-                disabled={loading}
                 onClick={loginWithGoogle}
-                className="w-full mt-5 font-serif flex items-center justify-center gap-2"
+                className="mt-4 w-full justify-center flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-black"
               >
-                <FcGoogle className="h-7 w-7" /> Sign In
+                <FcGoogle className="text-2xl" /> Sign In
               </Button>
             </DialogDescription>
           </DialogHeader>
