@@ -11,11 +11,11 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
+  DialogTitle,
 } from "../ui/dialog";
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 import { FcGoogle } from "react-icons/fc";
-import { CiCirclePlus } from "react-icons/ci";
 
 function Header() {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -52,83 +52,89 @@ function Header() {
   };
 
   return (
-    <div className="p-3 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4 px-5 bg-inherit border rounded-2xl border-white">
-      <img src="/logo-plans24.png" className="w-24 rounded-full" alt="Logo" />
+    <header className="p-4 bg-inherit border rounded-2xl border-white shadow-sm">
+      <div className="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-4">
+        <img
+          src="/logo-plans24.png"
+          alt="Logo"
+          className="w-24 rounded-full mx-auto sm:mx-0"
+        />
 
-      <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-5">
+        {/* Spacer to push profile dropdown right */}
+        <div className="flex-1"></div>
+
+        {/* Right side: if logged in, profile ic + dropdown; else Get Started */}
         {user ? (
-          <>
-            <a href="/create-trip">
-              <Button
-                varient="outline"
-                className="rounded-full bg-white border border-red-600 text-red-600 hover:bg-white"
+          <Popover>
+            <PopoverTrigger>
+              <img
+                src={user.picture}
+                alt="User profile"
+                className="h-11 w-11 rounded-full object-cover border border-gray-300 cursor-pointer"
+              />
+            </PopoverTrigger>
+            <PopoverContent className="min-w-[160px] p-2 rounded-lg shadow-lg bg-white">
+              <a
+                href="/create-trip"
+                className="block px-4 py-2 rounded hover:bg-red-100 text-red-600 font-semibold cursor-pointer"
               >
-                New Trip <CiCirclePlus />
-              </Button>
-            </a>
-
-            <a href="/my-trips">
-              <Button
-                varient="outline"
-                className="rounded-full bg-white border border-red-600 text-red-600 hover:bg-white"
+                New Trip 📍
+              </a>
+              <a
+                href="/my-trips"
+                className="block px-4 py-2 rounded hover:bg-red-100 text-red-600 font-semibold cursor-pointer"
               >
                 My Trips
-              </Button>
-            </a>
-
-            <Popover>
-              <PopoverTrigger>
-                <img
-                  src={user?.picture}
-                  alt="User profile"
-                  className="h-10 w-10 sm:h-11 sm:w-11 md:h-[45px] md:w-[45px] rounded-full object-cover border border-gray-300"
-                />
-              </PopoverTrigger>
-              <PopoverContent>
-                <h2
-                  className="cursor-pointer text-red-500 font-semibold"
-                  onClick={() => {
-                    googleLogout();
-                    localStorage.clear();
-                    window.location.reload();
-                  }}
-                >
-                  Log Out
-                </h2>
-              </PopoverContent>
-            </Popover>
-          </>
+              </a>
+              <hr className="my-2 border-gray-300" />
+              <button
+                onClick={() => {
+                  googleLogout();
+                  localStorage.clear();
+                  window.location.reload();
+                }}
+                className="w-full text-left px-4 py-2 rounded hover:bg-red-100 text-red-600 font-semibold cursor-pointer"
+              >
+                Log Out
+              </button>
+            </PopoverContent>
+          </Popover>
         ) : (
-          <Button onClick={() => setOpenDialogueForLogin(true)}>
+          <Button
+            onClick={() => setOpenDialogueForLogin(true)}
+            className="font-serif text-lg px-6 py-2 rounded-full"
+          >
             Get Started
           </Button>
         )}
       </div>
-
       <Dialog open={openDialogForLogin} onOpenChange={setOpenDialogueForLogin}>
         <DialogContent>
           <DialogHeader>
-            <DialogDescription className="text-center">
-              <img
-                className="w-24 rounded-full mx-auto"
-                src="/logo-plans24.png"
-                alt="App Logo"
-              />
-              <h2 className="font-bold text-lg font-serif mt-7">
-                Sign In With Google
-              </h2>
-              <p>Sign into Plans24 using secure Google Authentication</p>
-              <Button
-                onClick={loginWithGoogle}
-                className="w-full mt-5 font-serif flex items-center justify-center gap-2"
-              >
-                <FcGoogle className="h-7 w-7" /> Sign In
-              </Button>
+            <img
+              className="w-24 rounded-full mx-auto"
+              src="/logo-plans24.png"
+              alt="App Logo"
+            />
+
+            <DialogTitle className="font-serif text-2xl mt-7 text-center">
+              Sign In With Google
+            </DialogTitle>
+
+            <DialogDescription className="font-serif text-base text-gray-600 text-center mb-6">
+              Sign into Plans24 using secure Google Authentication
             </DialogDescription>
+
+            <Button
+              onClick={loginWithGoogle}
+              className="w-full font-serif flex items-center justify-center gap-2 text-lg"
+            >
+              <FcGoogle className="h-7 w-7" /> Sign In
+            </Button>
           </DialogHeader>
         </DialogContent>
       </Dialog>
-    </div>
+    </header>
   );
 }
 
