@@ -42,7 +42,8 @@ function Hotels({ trip }) {
       <h2 className="font-serif font-bold text-2xl mt-5">
         Hotel Recommendations
       </h2>
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 mt-5">
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 mt-5">
         {trip?.tripData?.hotelOptions?.map((hotel, index) => (
           <Link
             key={index}
@@ -57,7 +58,9 @@ function Hotels({ trip }) {
                 alt={hotel.hotelName}
               />
               <div className="my-2 mt-5 flex flex-col gap-2">
-                <h2 className="font-serif font-medium text-lg">{hotel.hotelName}</h2>
+                <h2 className="font-serif font-medium text-lg">
+                  {hotel.hotelName}
+                </h2>
                 <h2 className="font-serif text-gray-600 text-xs flex items-center gap-1">
                   <span>📍</span> {hotel.hotelAddress}
                 </h2>
@@ -73,4 +76,5 @@ function Hotels({ trip }) {
 }
 
 export default Hotels;
+
 
