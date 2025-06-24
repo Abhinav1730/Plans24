@@ -1,5 +1,4 @@
 import './App.css'
-import { Button } from './components/ui/button'
 import Hero from './components/usage/Hero'
 
 function App() {
