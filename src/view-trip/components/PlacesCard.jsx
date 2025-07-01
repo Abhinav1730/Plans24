@@ -63,53 +63,62 @@ function PlacesCard({ plan, weather }) {
 
             {/* Weather Info */}
             {weather && (
-              <div className="mt-3 bg-blue-50 text-blue-800 rounded-md px-3 py-2 w-full">
-                <div className="flex flex-wrap gap-2 items-center text-sm">
-                  <div className="flex items-center gap-1 whitespace-nowrap">
+              <div className="mt-3 bg-blue-50 text-blue-800 rounded-md px-3 py-2 w-full overflow-hidden">
+                <div className="flex flex-col gap-1 text-sm leading-relaxed break-words">
+                  {/* Weather Icon + Description */}
+                  <div className="flex items-center gap-2">
                     <img
                       src={`https://openweathermap.org/img/wn/${weather.icon}.png`}
                       alt={weather.description}
-                      className="w-5 h-5"
+                      className="w-5 h-5 flex-shrink-0"
                     />
                     <span className="capitalize">{weather.description}</span>
                   </div>
-                  <div className="flex items-center gap-1 whitespace-nowrap">
-                    Temp: <span>{weather.temperature}°C</span>
-                  </div>
-                  <div className="flex items-center gap-1 whitespace-nowrap">
-                    💧 {weather.humidity}%
+
+                  {/* Temp & Humidity on the same line */}
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <div className="flex items-center gap-1">
+                      Temp: <span>{weather.temperature}°C</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      💧 {weather.humidity}%
+                    </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Transportation */}
             {plan?.transportation && (
               <div className="mt-3 w-full bg-gray-100 rounded-md px-4 py-2 text-gray-800">
-                <div className="flex flex-wrap md:flex-nowrap items-center justify-between gap-y-2 text-sm font-medium">
-                  <div className="flex items-center gap-2 whitespace-nowrap">
+                {/* Main Transport Info */}
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-sm font-medium">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {getTransportIcon(plan.transportation.mode)}
-                    <span className="capitalize">
+                    <span className="capitalize whitespace-nowrap">
                       {plan.transportation.mode}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 whitespace-nowrap">
-                    <span>💰 {plan.transportation.fare}</span>
-                    <span>🕒 {plan.transportation.estimatedTime}</span>
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <span className="whitespace-nowrap">
+                      💰 {plan.transportation.fare}
+                    </span>
+                    <span className="whitespace-nowrap">
+                      🕒 {plan.transportation.estimatedTime}
+                    </span>
                   </div>
                 </div>
 
                 {/* Metro-specific */}
                 {plan.transportation.mode?.toLowerCase().includes("metro") && (
-                  <div className="mt-2 pl-2 text-xs md:text-sm text-gray-600 space-y-1 md:space-y-0 md:flex md:gap-6 md:items-center">
+                  <div className="mt-2 flex flex-col sm:flex-row sm:items-center sm:gap-6 text-xs sm:text-sm text-gray-600">
                     {plan.transportation.toStation && (
-                      <div className="whitespace-nowrap">
+                      <div className="whitespace-nowrap truncate">
                         🚉 To Station:{" "}
                         <strong>{plan.transportation.toStation}</strong>
                       </div>
                     )}
                     {plan.transportation.line && (
-                      <div className="whitespace-nowrap">
+                      <div className="whitespace-nowrap truncate">
                         📍 Line:{" "}
                         <span className="font-semibold">
                           {plan.transportation.line}
