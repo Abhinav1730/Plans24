@@ -1,4 +1,4 @@
- import React from "react";
+import React from "react";
 import PlacesCard from "./PlacesCard";
 
 function Itenary({ trip }) {
@@ -20,7 +20,7 @@ function Itenary({ trip }) {
                   <h2 className="font-serif font-medium text-sm text-red-600 mb-1">
                     {plan?.timeSlot}
                   </h2>
-                  <PlacesCard plan={plan} />
+                  <PlacesCard plan={plan} weather={item.weather} />
                 </div>
               ))}
             </div>
@@ -31,4 +31,4 @@ function Itenary({ trip }) {
   );
 }
 
-export default Itenary
+export default Itenary;

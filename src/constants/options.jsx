@@ -57,6 +57,9 @@ Location: {location}
 Duration: {days} days
 Travel With: {travelWith}
 Budget: {budget}
+Start Date: {preferredDate}
+
+Use realistic historical weather patterns for the specified location and dates to simulate daily weather.
 
 Your JSON output MUST contain the following top-level keys:
 - location (string): The location name
@@ -73,6 +76,12 @@ Your JSON output MUST contain the following top-level keys:
   * description (string)
 - itinerary (array): Array of day objects with keys:
   * day (number)
+  * weather (object): Daily weather forecast with keys:
+    - temperature (number, in °C)
+    - description (string, e.g. "Partly cloudy", "Rainy", etc.)
+    - humidity (percentage, number)
+    - windSpeed (number in km/h)
+    - icon (string representing weather, e.g. "01d", "10n")
   * plan (array): Each plan item with keys:
     - placeName (string)
     - placeDetails (string)
@@ -84,9 +93,9 @@ Your JSON output MUST contain the following top-level keys:
     - bestTimeToVisit (string)
 
 IMPORTANT:
-- All timeSlot values must be strictly formatted as either "HH A.M. - HH A.M." or "HH P.M. - HH P.M." (e.g., "09 A.M. - 11 A.M.", "02 P.M. - 04 P.M.")
+- The "weather" object must be included for each day in the itinerary.
+- All timeSlot values must be strictly formatted as either "HH A.M. - HH A.M." or "HH P.M. - HH P.M."
 - DO NOT include any keys outside of those specified.
 - DO NOT wrap the output in any variable or outer object.
 - ONLY return a valid JSON object matching the structure above.
 `;
-

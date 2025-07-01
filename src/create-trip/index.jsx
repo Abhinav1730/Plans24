@@ -24,7 +24,6 @@ import { db } from "../services/firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { getWeatherForecast } from "../services/WeatherApi";
 
 const backGroundImages = [
   "/place-5.jpg",
@@ -36,7 +35,8 @@ const backGroundImages = [
 
 function CreateTrip() {
   const navigate = useNavigate();
-  const [currentBackGroundImageIndex, setCurrentBackGroundImageIndex] = useState(0);
+  const [currentBackGroundImageIndex, setCurrentBackGroundImageIndex] =
+    useState(0);
   const [selectedDestination, setSelectedDestination] = useState(null);
   const [loading, setLoading] = useState(false);
   const [openDialogForLogin, setOpenDialogueForLogin] = useState(false);
@@ -82,7 +82,7 @@ function CreateTrip() {
     onError: (err) => console.error(err),
   });
 
-  // Main function to generate trip and fetch weather
+  // Main function to generate trip (AI only — weather included in AI response)
   const onGenerateTrip = async () => {
     if (!localStorage.getItem("user")) return setOpenDialogueForLogin(true);
     if (!formData.location) return toast.error("Enter a location");
@@ -96,23 +96,9 @@ function CreateTrip() {
     toast.success("Generating your trip...");
     setLoading(true);
 
-    // Format date for API & prompt
     const formattedDate = formData.preferredDate.toISOString().split("T")[0];
-    let weatherData = null;
 
-    // Fetch hourly weather for the start date
-    try {
-      weatherData = await getWeatherForecast(
-        formData.location.lat,
-        formData.location.lon,
-        formattedDate
-      );
-    } catch (err) {
-      console.error("Weather fetch error:", err);
-      toast.error("Failed to fetch weather");
-    }
-
-    // Prepare AI prompt
+    // Create the final AI prompt
     const FINAL_PROMPT = AI_PROMPT.replace("{location}", formData.location.name)
       .replace(/{days}/g, formData.days)
       .replace("{travelWith}", formData.travelWith.title)
@@ -120,21 +106,16 @@ function CreateTrip() {
       .replace("{preferredDate}", formattedDate);
 
     try {
-      // Call AI model to generate trip JSON
       const res = await generateTrip(FINAL_PROMPT);
       const json = res.match(/```json\s*([\s\S]*?)```|({[\s\S]*})/);
       if (!json) throw new Error("No JSON found");
       const parsed = JSON.parse(json[1] || json[2]);
 
-      // Attach weather data to trip data
-      const tripDataWithWeather = { ...parsed, weather: weatherData };
       const tripId = Date.now().toString();
-
-      // Save trip in Firestore
       await setDoc(doc(db, "AIGeneratedTrips", tripId), {
         id: tripId,
         userSelection: formData,
-        tripData: tripDataWithWeather,
+        tripData: parsed,
         userEmail: JSON.parse(localStorage.getItem("user")).email,
       });
 
