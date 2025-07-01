@@ -49,7 +49,6 @@ function CreateTrip() {
     preferredDate: null,
   });
 
-  // Background image slideshow
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentBackGroundImageIndex(
@@ -63,7 +62,6 @@ function CreateTrip() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Google login success handler
   const GetUserProfile = (tokenInfo) => {
     axios
       .get(
@@ -82,7 +80,6 @@ function CreateTrip() {
     onError: (err) => console.error(err),
   });
 
-  // Main function to generate trip (AI only — weather included in AI response)
   const onGenerateTrip = async () => {
     if (!localStorage.getItem("user")) return setOpenDialogueForLogin(true);
     if (!formData.location) return toast.error("Enter a location");
@@ -98,7 +95,6 @@ function CreateTrip() {
 
     const formattedDate = formData.preferredDate.toISOString().split("T")[0];
 
-    // Create the final AI prompt
     const FINAL_PROMPT = AI_PROMPT.replace("{location}", formData.location.name)
       .replace(/{days}/g, formData.days)
       .replace("{travelWith}", formData.travelWith.title)
@@ -137,6 +133,7 @@ function CreateTrip() {
       }}
     >
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+
       <div className="relative z-10 w-full max-w-6xl py-10 sm:py-12 px-2 sm:px-6 bg-black/30 rounded-lg backdrop-blur-md shadow-2xl">
         <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white text-center">
           Tell us your <span className="text-red-200">Travel Preference</span>
@@ -252,19 +249,45 @@ function CreateTrip() {
             </div>
           </div>
 
-          {/* Submit Button */}
-          <div className="flex justify-center mt-6">
+          {/* Submit Button + Spinner Message */}
+          <div className="flex flex-col items-center mt-6 space-y-4">
             <Button
               onClick={onGenerateTrip}
               disabled={loading}
               className="px-6 py-3 text-lg sm:text-xl font-semibold bg-red-600 hover:bg-red-700"
             >
               {loading ? (
-                <AiOutlineLoading3Quarters className="animate-spin text-white text-2xl" />
+                <div className="flex items-center gap-2">
+                  <AiOutlineLoading3Quarters className="animate-spin text-white text-2xl" />
+                  <span>Planning your trip...</span>
+                </div>
               ) : (
                 "Generate Trip"
               )}
             </Button>
+
+            {loading && (
+              <div className="fixed inset-0 z-50 bg-black bg-opacity-80 flex flex-col items-center justify-center text-white px-4 sm:px-8">
+                <AiOutlineLoading3Quarters className="text-4xl sm:text-5xl animate-spin mb-6 text-red-400" />
+
+                <div className="max-w-2xl w-full">
+                  <div className="bg-white/10 rounded-lg p-6 text-left text-gray-100 text-sm sm:text-base space-y-3 font-headline shadow-xl backdrop-blur-sm">
+                    <p>
+                      🧭 Searching for hidden gems in{" "}
+                      <strong>{formData.location?.name}</strong>...
+                    </p>
+                    <p>🏨 Comparing hotels for the best stay...</p>
+                    <p>🌦️ Checking weather history for optimal planning...</p>
+                    <p>🚗 Calculating travel time and best routes...</p>
+                    <p>🧠 Curating the perfect plan just for you...</p>
+                  </div>
+                </div>
+
+                <p className="mt-6 text-xs text-gray-300">
+                  Sit tight! Your itinerary is being crafted ✈️
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
