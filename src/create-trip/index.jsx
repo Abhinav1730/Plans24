@@ -35,12 +35,10 @@ const backGroundImages = [
 
 function CreateTrip() {
   const navigate = useNavigate();
-  const [currentBackGroundImageIndex, setCurrentBackGroundImageIndex] =
-    useState(0);
+  const [bgIndex, setBgIndex] = useState(0);
   const [selectedDestination, setSelectedDestination] = useState(null);
   const [loading, setLoading] = useState(false);
   const [openDialogForLogin, setOpenDialogueForLogin] = useState(false);
-
   const [formData, setFormData] = useState({
     location: null,
     days: "",
@@ -51,33 +49,28 @@ function CreateTrip() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentBackGroundImageIndex(
-        (prev) => (prev + 1) % backGroundImages.length
-      );
+      setBgIndex((i) => (i + 1) % backGroundImages.length);
     }, 10000);
     return () => clearInterval(interval);
   }, []);
 
   const handleInputChange = (name, value) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const GetUserProfile = (tokenInfo) => {
-    axios
-      .get(
-        `https://www.googleapis.com/oauth2/v1/userinfo?access_token=${tokenInfo.access_token}`
-      )
-      .then((resp) => {
-        localStorage.setItem("user", JSON.stringify(resp.data));
-        setOpenDialogueForLogin(false);
-        onGenerateTrip();
-      })
-      .catch(() => toast.error("Google login failed."));
+    setFormData((p) => ({ ...p, [name]: value }));
   };
 
   const loginWithGoogle = useGoogleLogin({
-    onSuccess: GetUserProfile,
-    onError: (err) => console.error(err),
+    onSuccess: (t) =>
+      axios
+        .get(
+          `https://www.googleapis.com/oauth2/v1/userinfo?access_token=${t.access_token}`
+        )
+        .then((resp) => {
+          localStorage.setItem("user", JSON.stringify(resp.data));
+          setOpenDialogueForLogin(false);
+          onGenerateTrip();
+        })
+        .catch(() => toast.error("Google login failed.")),
+    onError: console.error,
   });
 
   const onGenerateTrip = async () => {
@@ -92,9 +85,7 @@ function CreateTrip() {
 
     toast.success("Generating your trip...");
     setLoading(true);
-
     const formattedDate = formData.preferredDate.toISOString().split("T")[0];
-
     const FINAL_PROMPT = AI_PROMPT.replace("{location}", formData.location.name)
       .replace(/{days}/g, formData.days)
       .replace("{travelWith}", formData.travelWith.title)
@@ -103,10 +94,9 @@ function CreateTrip() {
 
     try {
       const res = await generateTrip(FINAL_PROMPT);
-      const json = res.match(/```json\s*([\s\S]*?)```|({[\s\S]*})/);
-      if (!json) throw new Error("No JSON found");
-      const parsed = JSON.parse(json[1] || json[2]);
-
+      const match = res.match(/```json\s*([\s\S]*?)```|({[\s\S]*})/);
+      if (!match) throw new Error("No JSON found");
+      const parsed = JSON.parse(match[1] || match[2]);
       const tripId = Date.now().toString();
       await setDoc(doc(db, "AIGeneratedTrips", tripId), {
         id: tripId,
@@ -114,7 +104,6 @@ function CreateTrip() {
         tripData: parsed,
         userEmail: JSON.parse(localStorage.getItem("user")).email,
       });
-
       setLoading(false);
       toast.success("Trip ready! Redirecting...");
       navigate(`/view-trip/${tripId}`);
@@ -126,152 +115,150 @@ function CreateTrip() {
   };
 
   return (
-    <div
-      className="relative w-full min-h-screen bg-cover bg-center flex flex-col items-center justify-center px-4 sm:px-6 md:px-10 lg:px-20 xl:px-32"
-      style={{
-        backgroundImage: `url(${backGroundImages[currentBackGroundImageIndex]})`,
-      }}
-    >
+    <div className="relative w-full min-h-screen overflow-hidden">
+      <div
+        className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
+        style={{ backgroundImage: `url(${backGroundImages[bgIndex]})` }}
+      />
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
-      <div className="relative z-10 w-full max-w-6xl py-10 sm:py-12 px-2 sm:px-6 bg-black/30 rounded-lg backdrop-blur-md shadow-2xl">
-        <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white text-center">
-          Tell us your <span className="text-red-200">Travel Preference</span>
-        </h2>
-        <p className="text-base sm:text-lg text-gray-100 font-sans text-center mt-2">
-          Share your destination, dates, budget & interests. We'll build a trip
-          plan!
-        </p>
+      <div className="relative z-10 flex flex-col items-center justify-center w-full min-h-screen px-4 py-8 sm:px-6 md:px-10 lg:px-20 xl:px-32">
+        <div className="w-full max-w-3xl bg-black/30 rounded-lg backdrop-blur-md p-6 sm:p-10 shadow-2xl space-y-6">
+          <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white text-center">
+            Tell us your <span className="text-red-200">Travel Preference</span>
+          </h2>
+          <p className="text-base sm:text-lg text-gray-100 text-center">
+            Share destination, dates & budget — we’ll build your trip plan!
+          </p>
 
-        <div className="mt-10 space-y-8">
-          {/* Destination */}
-          <div>
-            <h3 className="text-lg sm:text-xl font-medium text-white font-serif mb-2">
-              Destination
-            </h3>
-            <OSMSearchBox
-              onSelect={(pl) => {
-                setSelectedDestination(pl);
-                handleInputChange("location", {
-                  name: pl.display_name,
-                  lat: pl.lat,
-                  lon: pl.lon,
-                });
-              }}
-            />
-            {selectedDestination && (
-              <p className="mt-2 text-white font-serif text-sm">
-                {selectedDestination.display_name}
-              </p>
-            )}
-          </div>
+          {/* Form Fields */}
+          <div className="space-y-6">
+            {/* Destination */}
+            <div>
+              <h3 className="text-lg sm:text-xl font-serif text-white mb-2">
+                Destination
+              </h3>
+              <OSMSearchBox
+                onSelect={(pl) => {
+                  setSelectedDestination(pl);
+                  handleInputChange("location", {
+                    name: pl.display_name,
+                    lat: pl.lat,
+                    lon: pl.lon,
+                  });
+                }}
+              />
+              {selectedDestination && (
+                <p className="mt-2 text-gray-200 text-sm">
+                  {selectedDestination.display_name}
+                </p>
+              )}
+            </div>
 
-          {/* Days */}
-          <div>
-            <h3 className="text-lg sm:text-xl font-medium text-white font-serif mb-2">
-              Days (max 7)
-            </h3>
-            <div className="flex justify-center">
+            {/* Days */}
+            <div>
+              <h3 className="text-lg sm:text-xl font-serif text-white mb-2">
+                Days (max 7)
+              </h3>
               <Input
                 type="number"
                 value={formData.days}
                 onChange={(e) => handleInputChange("days", e.target.value)}
                 placeholder="1–7"
-                className="w-full sm:w-64 md:w-72 lg:w-80 rounded-xl border-red-400 bg-white text-gray-800 text-lg sm:text-xl px-3 py-2"
+                className="w-full sm:w-64 rounded-xl border-red-400 bg-white text-gray-800 px-3 py-2 text-lg sm:text-xl"
               />
             </div>
-          </div>
 
-          {/* Preferred Date */}
-          <div>
-            <h3 className="text-lg sm:text-xl font-medium text-white font-serif mb-2">
-              Start Date
-            </h3>
-            <DatePicker
-              selected={formData.preferredDate}
-              onChange={(date) => handleInputChange("preferredDate", date)}
-              minDate={new Date()}
-              dateFormat="yyyy-MM-dd"
-              className="w-full max-w-md rounded-xl border-red-400 px-3 py-2 text-gray-800 text-lg sm:text-xl"
-              placeholderText="Select start date"
-            />
-          </div>
-
-          {/* Budget */}
-          <div>
-            <h3 className="text-lg sm:text-xl font-medium text-white font-serif mb-2">
-              Budget
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {SelectBudgetOptions.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => handleInputChange("budget", item)}
-                  className={`p-4 border rounded-lg cursor-pointer transition duration-200 ${
-                    formData.budget?.id === item.id
-                      ? "border-red-400 bg-white/10 shadow-lg"
-                      : "border-white/40"
-                  }`}
-                >
-                  <h2 className="text-3xl sm:text-4xl">{item.icon}</h2>
-                  <p className="text-white font-serif text-lg">{item.title}</p>
-                  <p className="text-white font-serif text-sm">
-                    {item.description}
-                  </p>
-                </div>
-              ))}
+            {/* Date */}
+            <div>
+              <h3 className="text-lg sm:text-xl font-serif text-white mb-2">
+                Start Date
+              </h3>
+              <DatePicker
+                selected={formData.preferredDate}
+                onChange={(date) => handleInputChange("preferredDate", date)}
+                minDate={new Date()}
+                dateFormat="yyyy-MM-dd"
+                className="w-full sm:w-full rounded-xl border-red-400 bg-white px-3 py-2 text-gray-800 text-lg sm:text-xl"
+              />
             </div>
-          </div>
 
-          {/* Travel With */}
-          <div>
-            <h3 className="text-lg sm:text-xl font-medium text-white font-serif mb-2">
-              Travel With
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {SelectTravelList.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => handleInputChange("travelWith", item)}
-                  className={`p-4 border rounded-lg cursor-pointer transition duration-200 ${
-                    formData.travelWith?.id === item.id
-                      ? "border-red-400 bg-white/10 shadow-lg"
-                      : "border-white/40"
-                  }`}
-                >
-                  <h2 className="text-3xl sm:text-4xl">{item.icon}</h2>
-                  <p className="text-white font-serif text-lg">{item.title}</p>
-                  <p className="text-white font-serif text-sm">
-                    {item.description}
-                  </p>
+            {/* Budget & Travel With */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <h3 className="text-lg sm:text-xl font-serif text-white mb-2">
+                  Budget
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {SelectBudgetOptions.map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => handleInputChange("budget", item)}
+                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                        formData.budget?.id === item.id
+                          ? "border-red-400 bg-white/10"
+                          : "border-white/40"
+                      }`}
+                    >
+                      <div className="text-2xl">{item.icon}</div>
+                      <div className="text-white font-serif">{item.title}</div>
+                      <div className="text-xs text-gray-200">
+                        {item.description}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              <div>
+                <h3 className="text-lg sm:text-xl font-serif text-white mb-2">
+                  Travel With
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {SelectTravelList.map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => handleInputChange("travelWith", item)}
+                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                        formData.travelWith?.id === item.id
+                          ? "border-red-400 bg-white/10"
+                          : "border-white/40"
+                      }`}
+                    >
+                      <div className="text-2xl">{item.icon}</div>
+                      <div className="text-white font-serif">{item.title}</div>
+                      <div className="text-xs text-gray-200">
+                        {item.description}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Submit Button + Spinner Message */}
-          <div className="flex flex-col items-center mt-6 space-y-4">
-            <Button
-              onClick={onGenerateTrip}
-              disabled={loading}
-              className="px-6 py-3 text-lg sm:text-xl font-semibold bg-red-600 hover:bg-red-700"
-            >
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <AiOutlineLoading3Quarters className="animate-spin text-white text-2xl" />
-                  <span>Planning your trip...</span>
-                </div>
-              ) : (
-                "Generate Trip"
-              )}
-            </Button>
+            {/* Submit */}
+            <div className="flex flex-col items-center space-y-4">
+              <Button
+                onClick={onGenerateTrip}
+                disabled={loading}
+                className="px-6 py-3 bg-red-600 hover:bg-red-700 text-lg sm:text-xl font-semibold"
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <AiOutlineLoading3Quarters className="animate-spin text-white text-2xl" />
+                    Planning your trip...
+                  </span>
+                ) : (
+                  "Generate Trip"
+                )}
+              </Button>
 
-            {loading && (
-              <div className="fixed inset-0 z-50 bg-black bg-opacity-80 flex flex-col items-center justify-center text-white px-4 sm:px-8">
-                <AiOutlineLoading3Quarters className="text-4xl sm:text-5xl animate-spin mb-6 text-red-400" />
+              {/* Loading Overlay */}
+              {loading && (
+                <div className="fixed inset-0 z-50 bg-black bg-opacity-80 flex flex-col items-center justify-center text-white px-4 sm:px-8">
+                  <AiOutlineLoading3Quarters className="text-4xl sm:text-5xl animate-spin mb-6 text-red-400" />
 
-                <div className="max-w-2xl w-full">
-                  <div className="bg-white/10 rounded-lg p-6 text-left text-gray-100 text-sm sm:text-base space-y-3 font-headline shadow-xl backdrop-blur-sm">
+                  <div className="bg-white/10 rounded-lg p-6 text-left text-gray-100 text-base space-y-3 font-mono shadow-xl backdrop-blur-sm max-w-lg w-full">
                     <p>
                       🧭 Searching for hidden gems in{" "}
                       <strong>{formData.location?.name}</strong>...
@@ -281,18 +268,17 @@ function CreateTrip() {
                     <p>🚗 Calculating travel time and best routes...</p>
                     <p>🧠 Curating the perfect plan just for you...</p>
                   </div>
-                </div>
 
-                <p className="mt-6 text-xs text-gray-300">
-                  Sit tight! Your itinerary is being crafted ✈️
-                </p>
-              </div>
-            )}
+                  <p className="mt-6 text-xs text-gray-300">
+                    Sit tight! Your itinerary is on its way ✈️
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Google Login Dialog */}
       <Dialog open={openDialogForLogin} onOpenChange={setOpenDialogueForLogin}>
         <DialogContent className="max-w-sm sm:max-w-md bg-white rounded-lg">
           <DialogHeader>
@@ -307,7 +293,7 @@ function CreateTrip() {
               </h2>
               <Button
                 onClick={loginWithGoogle}
-                className="mt-4 w-full justify-center flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-black"
+                className="mt-4 w-full flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-black"
               >
                 <FcGoogle className="text-2xl" /> Sign In
               </Button>

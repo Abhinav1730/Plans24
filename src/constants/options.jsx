@@ -98,13 +98,15 @@ Your JSON output MUST contain the following top-level keys:
       * fromStation (string, optional, for metro)
       * toStation (string, optional, for metro)
       * line (string, optional, e.g. "Blue Line")
+  * essentialsToCarry (array of strings): Recommended items to carry for the day's conditions and activities (e.g., "Raincoat", "Sunscreen", "Power bank")
+  * medicalAdvice (string): Health precautions or medications based on weather, altitude, food, or location-specific risks
 
 IMPORTANT:
 - The "weather" object must be included for each day in the itinerary.
 - All timeSlot values must be strictly formatted as either "HH A.M. - HH A.M." or "HH P.M. - HH P.M."
+- "essentialsToCarry" and "medicalAdvice" must be present for each day.
 - DO NOT include any keys outside of those specified.
 - DO NOT wrap the output in any variable or outer object.
 - ONLY return a valid JSON object matching the structure above.
 - Respond only in correct JSON format. Do not use comments or extra explanation.
 `;
-

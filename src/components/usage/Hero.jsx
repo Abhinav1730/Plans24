@@ -12,11 +12,15 @@ function Hero() {
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-headline leading-tight">
           Plan your perfect trip effortlessly with our AI travel planner —{" "}
           <span className="text-red-200">smart, fast,</span> and{" "}
-          <span className="text-red-200">tailored to your preferences and budget</span>.
+          <span className="text-red-200">
+            tailored to your preferences and budget
+          </span>
+          .
         </h1>
 
         <p className="text-base sm:text-lg font-body text-gray-100">
-          Discover destinations, create custom itineraries, and explore smarter — all powered by AI.
+          Discover destinations, create custom itineraries, and explore smarter
+          — all powered by AI.
         </p>
 
         <Link to="/create-trip" className="w-full sm:w-auto">
