@@ -1,5 +1,7 @@
 # Plans24 ✈️
 
+**Transforming Travel Planning with AI Driven Precision
+
 An advanced itinerary planning app built with **React.js** that leverages **Google Gemini AI** to generate personalized trip itineraries. It features a sleek, interactive UI and integrates with Firebase and multiple APIs for a smooth user experience.
 
 ---
