@@ -91,6 +91,13 @@ Your JSON output MUST contain the following top-level keys:
     - timeToTravel (number, in minutes)
     - timeSlot (string in the format: "HH A.M. - HH A.M." or "HH P.M. - HH P.M.")
     - bestTimeToVisit (string)
+    - transportation (object): How to reach this place from the previous one, with keys:
+      * mode (string, e.g. "Metro", "Taxi", "Auto", "Bus")
+      * fare (string, e.g. "₹50")
+      * estimatedTime (string, e.g. "15 mins")
+      * fromStation (string, optional, for metro)
+      * toStation (string, optional, for metro)
+      * line (string, optional, e.g. "Blue Line")
 
 IMPORTANT:
 - The "weather" object must be included for each day in the itinerary.
@@ -98,4 +105,6 @@ IMPORTANT:
 - DO NOT include any keys outside of those specified.
 - DO NOT wrap the output in any variable or outer object.
 - ONLY return a valid JSON object matching the structure above.
+- Respond only in correct JSON format. Do not use comments or extra explanation.
 `;
+
